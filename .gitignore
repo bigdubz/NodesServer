@@ -1,4 +1,7 @@
 node_modules/
+src/db/*.db
+src/db/*.db-wal
+src/db/*.db-shm
 .idea/
 dist/
 *.log

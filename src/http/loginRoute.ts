@@ -1,6 +1,7 @@
 import { IncomingMessage, ServerResponse } from "http";
-import { validateUser } from "../auth/userStore.js"
 import { createToken } from "../auth/createToken.js"
+import { UserDB } from "../db/userDb.js";
+import bcrypt from "bcrypt";
 
 export function handleLogin(req: IncomingMessage, res: ServerResponse) {
 
@@ -21,22 +22,24 @@ export function handleLogin(req: IncomingMessage, res: ServerResponse) {
     let body = "";
 
     req.on("data", chunk => (body += chunk))
-    req.on("end", () => {
-        try {
-            const { userId, password } = JSON.parse(body);
+    req.on("end", async () => {
+        const { userId, password } = JSON.parse(body);
 
-            if (!validateUser(userId, password)) {
-                res.writeHead(401);
-                return res.end("Invalid credentials");
-            }
-
-            const token = createToken(userId);
-
-            res.writeHead(200, {"Content-Type": "application/json"});
-            res.end(JSON.stringify({ token }));
-        } catch (err) {
-            res.writeHead(400);
-            res.end("Invalid JSON");
+        const user = UserDB.getUser(userId);
+        if (!user) {
+            res.writeHead(401);
+            return res.end("Invalid user or password");
         }
+
+        const ok = await bcrypt.compare(password, user.passwordHash);
+        if (!ok) {
+            res.writeHead(401);
+            return res.end("Invalid user or password");
+        }
+
+        const token = createToken(userId);
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ token }));
     })
 }

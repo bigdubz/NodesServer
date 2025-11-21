@@ -14,12 +14,16 @@
   "dependencies": {
     "@types/jsonwebtoken": "^9.0.10",
     "@types/ws": "^8.18.1",
+    "bcrypt": "^6.0.0",
+    "better-sqlite3": "^12.4.5",
     "jsonwebtoken": "^9.0.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3",
     "ws": "^8.18.3"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.10.1",
     "tsk": "^0.3.2",
     "tsx": "^4.20.6"

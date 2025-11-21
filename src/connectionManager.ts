@@ -14,6 +14,10 @@ class ConnectionManager {
     get(userId: string): WebSocket | undefined {
         return this.connections.get(userId);
     }
+
+    getAll(): WebSocket[] {
+        return Array.from(this.connections.values());
+    }
 }
 
 export const connectionManager = new ConnectionManager();

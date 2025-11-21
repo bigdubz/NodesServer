@@ -1,6 +1,9 @@
 import type { WebSocket } from "ws";
 import type { ClientChatMessage, ServerChatMessage, ServerError } from "../types.js";
 import { connectionManager } from "../connectionManager.js";
+import { MessageDB } from "../db"
+import crypto from "crypto"
+
 
 export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
     const fromUserId = (ws as any).userId;
@@ -15,20 +18,35 @@ export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
     }
 
     const { toUserId, text } = msg.payload;
-    const target = connectionManager.get(toUserId);
+    const createdAt = Date.now();
+    const messageId = crypto.randomUUID();
+
 
     const serverMsg: ServerChatMessage = {
         type: "CHAT_MESSAGE",
         payload: {
             fromUserId,
             text,
-            messageId: Math.random().toString(36).slice(2),
-            createdAt: new Date().toISOString()
+            messageId,
+            createdAt
         }
     };
 
-    if (target) {
+    MessageDB.saveMessage({
+        messageId,
+        fromUserId,
+        toUserId,
+        text,
+        createdAt
+    })
+    console.log("Message saved to DB:", serverMsg.payload);
+
+    const target = connectionManager.get(toUserId);
+
+    if (target && target.readyState === target.OPEN) {
         target.send(JSON.stringify(serverMsg));
+
+        MessageDB.markDelivered(messageId);
 
         // send ACK to sender
         ws.send(
@@ -36,13 +54,6 @@ export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
                 type: "MESSAGE_DELIVERED",
                 payload: { messageId: serverMsg.payload.messageId }
             })
-        );
-    } else {
-        ws.send(
-            JSON.stringify({
-                type: "ERROR",
-                payload: { error: "User not connected" }
-            } as ServerError)
         );
     }
 }

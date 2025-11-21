@@ -1,9 +1,11 @@
-import { WebSocketServer } from "ws";
-import http from "http";
-import { routeMessage } from "./messageRouter.js";
 import type { ClientMessage } from "./types.js";
+import http from "http";
+import { WebSocketServer } from "ws";
+import { routeMessage } from "./messageRouter.js";
 import { connectionManager } from "./connectionManager.js";
 import { handleLogin } from "./http/loginRoute.js";
+import { setOffline } from "./presence/presenceStore.js";
+import { broadcast } from "./utils/broadcast.js";
 
 const PORT = 8080;
 
@@ -20,9 +22,13 @@ const server = http.createServer((req, res) => {
 // websocket server
 const wss = new WebSocketServer({ server });
 
-
 wss.on("connection", (ws) => {
     console.log("Client connected");
+
+    (ws as any).isAlive = true;
+    ws.on("pong", () => {
+        (ws as any).isAlive = true;
+    })
 
     ws.on("message", (raw) => {
         try {
@@ -34,10 +40,27 @@ wss.on("connection", (ws) => {
     });
 
     ws.on("close", () => {
-        const id = (ws as any).userId;
-        if (id) connectionManager.remove(id);
-        console.log("Client disconnected");
+        const userId = (ws as any).userId;
+        if (!userId) return;
+        setOffline(userId);
+        broadcast({ type: "USER_OFFLINE", payload: { userId, lastSeen: Date.now() } });
+        connectionManager.remove(userId);
+        console.log("Client disconnected (", userId, ")");
     });
 });
+
+wss.on("close", () => clearInterval(interval));
+
+const interval = setInterval(() => {
+    wss.clients.forEach((ws: any) => {
+        if (ws.isAlive === false) {
+            console.log("Terminating dead connection");
+            return ws.terminate();
+        }
+
+        ws.isAlive = false;
+        ws.ping();
+    });
+}, 30000 );
 
 server.listen(PORT, "0.0.0.0", () => console.log(`Server is running on port ${PORT}`));
