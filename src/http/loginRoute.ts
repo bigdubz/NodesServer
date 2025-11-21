@@ -9,7 +9,7 @@ export function handleLogin(req: IncomingMessage, res: ServerResponse) {
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
     if (req.method === "OPTIONS") {
-        res.writeHead(200);
+        res.writeHead(204);
         return res.end();
     }
 

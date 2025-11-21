@@ -28,7 +28,6 @@ wss.on("connection", (ws) => {
         try {
             const msg = JSON.parse(raw.toString()) as ClientMessage;
             routeMessage(ws, msg);
-            console.log("routed message:", msg);
         } catch (err) {
             console.error("Error parsing message:", err);
         }

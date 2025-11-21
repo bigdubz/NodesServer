@@ -4,7 +4,15 @@ import { connectionManager } from "../connectionManager.js";
 
 export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
     const fromUserId = (ws as any).userId;
-    if (!fromUserId) return;
+    if (!fromUserId) {
+        ws.send(
+            JSON.stringify({
+                type: "ERROR",
+                payload: { error: "Unauthorized (not logged in)" }
+            } as ServerError)
+        );
+        return;
+    }
 
     const { toUserId, text } = msg.payload;
     const target = connectionManager.get(toUserId);
