@@ -8,7 +8,20 @@ export type ClientChatMessage = {
     payload: { toUserId: string; text: string };
 };
 
-export type ClientMessage = ClientAuthMessage | ClientChatMessage;
+export type ClientMessageSeen = {
+    type: "MESSAGE_SEEN";
+    payload: { messageId: string };
+}
+
+export type ClientTyping = {
+    type: "USER_TYPING",
+    payload: {
+        toUserId: string;
+        isTyping: boolean;
+    }
+}
+
+export type ClientMessage = ClientAuthMessage | ClientChatMessage | ClientMessageSeen | ClientTyping;
 
 export type ServerAuthOK = {
     type: "AUTH_OK";
@@ -35,6 +48,11 @@ export type ServerMessageDelivered = {
     payload: { messageId: string }
 }
 
+export type ServerMessageSeen = {
+    type: "MESSAGE_SEEN";
+    payload: { messageId: string };
+}
+
 export type ServerError = {
     type: "ERROR";
     payload: { error: string }
@@ -50,8 +68,8 @@ export type ServerUserOffline = {
     payload: { userId: string; lastSeen: number };
 }
 
-export type ServerMessage = ServerAuthOK | ServerAuthError | ServerChatMessage | ServerMessageDelivered | ServerError |
-    ServerUserOnline | ServerUserOffline;
+export type ServerMessage = ServerAuthOK | ServerAuthError | ServerChatMessage | ServerMessageDelivered |
+    ServerMessageSeen | ServerError | ServerUserOnline | ServerUserOffline;
 
 export type PresenceState = {
     online: boolean;

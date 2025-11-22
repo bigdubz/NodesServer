@@ -4,6 +4,7 @@ import { WebSocketServer } from "ws";
 import { routeMessage } from "./messageRouter.js";
 import { connectionManager } from "./connectionManager.js";
 import { handleLogin } from "./http/loginRoute.js";
+import { handleHistory } from "./http/historyRoute.js";
 import { setOffline } from "./presence/presenceStore.js";
 import { broadcast } from "./utils/broadcast.js";
 
@@ -11,8 +12,12 @@ const PORT = 8080;
 
 // http server
 const server = http.createServer((req, res) => {
-    if (req.url === "/login") {
+    const path = req.url?.split("?")[0];
+    if (path === "/login") {
         return handleLogin(req, res);
+    }
+    if (path === "/history") {
+        return handleHistory(req, res);
     }
 
     res.writeHead(200);

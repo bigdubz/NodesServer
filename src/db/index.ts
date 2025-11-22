@@ -23,7 +23,7 @@ const markDeliveredStmt = db.prepare(`
     UPDATE messages SET delivered = 1 WHERE messageId = ?
 `);
 
-const markReadStmt = db.prepare(`
+const markSeenStmt = db.prepare(`
     UPDATE messages SET seen = 1 WHERE messageId = ?
 `);
 
@@ -39,6 +39,28 @@ const getConversationStmt = db.prepare(`
        OR (fromUserId = @userB AND toUserId = @userA)
     ORDER BY createdAt ASC
 `);
+
+const getMessagesStmt = db.prepare(`
+    SELECT *
+    FROM messages
+    WHERE 
+        (
+            (fromUserId = @me AND toUserId = @them)
+            OR
+            (fromUserId = @them AND toUserId = @me)
+        )
+        AND createdAt < @before
+    ORDER BY createdAt DESC
+    LIMIT @limit
+`);
+
+const getSenderStmt = db.prepare(`
+    SELECT fromUserId
+    FROM messages
+    WHERE messageId = ?
+`);
+
+
 
 export const MessageDB = {
     saveMessage(message: {
@@ -56,7 +78,7 @@ export const MessageDB = {
     },
 
     markSeen(messageId: string): void {
-        markReadStmt.run(messageId);
+        markSeenStmt.run(messageId);
     },
 
     getUndeliveredMessages(userId: string): MessageRow[] {
@@ -65,5 +87,18 @@ export const MessageDB = {
 
     getConversation(userA: string, userB: string): MessageRow[] {
         return getConversationStmt.all({ userA, userB }) as MessageRow[];
+    },
+
+    getMessages(me: string, them: string, before: number, limit: number): MessageRow[] {
+        return getMessagesStmt.all({ me, them, before, limit }) as unknown as MessageRow[];
+    },
+
+    getSenderOfMessage(messageId: string): string {
+        const row = getSenderStmt.get(messageId) as MessageRow;
+        if (!row) {
+            throw new Error("Message not found: " + messageId);
+        }
+
+        return row.fromUserId;
     }
 };

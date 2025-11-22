@@ -1,5 +1,5 @@
 import type { WebSocket } from "ws";
-import type { ClientChatMessage, ServerChatMessage, ServerError } from "../types.js";
+import type { ClientChatMessage, ServerChatMessage, ServerError, ClientMessageSeen, ClientTyping } from "../types.js";
 import { connectionManager } from "../connectionManager.js";
 import { MessageDB } from "../db"
 import crypto from "crypto"
@@ -58,3 +58,36 @@ export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
     }
 }
 
+export function handleMessageSeen(_ws: WebSocket, msg: ClientMessageSeen) {
+    const { messageId } = msg.payload;
+
+    MessageDB.markSeen(messageId);
+
+    const senderId = MessageDB.getSenderOfMessage(messageId);
+    const sender = connectionManager.get(senderId);
+
+    if (sender && sender.readyState === sender.OPEN) {
+        sender.send(JSON.stringify({
+            type: "MESSAGE_SEEN",
+            payload: { messageId }
+        }));
+    }
+}
+
+export function handleUserTyping(ws: WebSocket, msg: ClientTyping) {
+    const fromUserId = (ws as any).userId;
+    const { toUserId, isTyping } = msg.payload;
+
+    if (!fromUserId) return // not authenticated
+    const target: WebSocket | undefined = connectionManager.get(toUserId);
+
+    if (!target) return // user offline
+
+    target.send(JSON.stringify({
+        type: "USER_TYPING",
+        payload: {
+            fromUserId,
+            isTyping
+        }
+    }));
+}
