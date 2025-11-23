@@ -5,9 +5,12 @@ import bcrypt from "bcrypt";
 
 export function handleLogin(req: IncomingMessage, res: ServerResponse) {
 
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    const origin = req.headers.origin;
+    if (origin) {
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+        res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    }
 
     if (req.method === "OPTIONS") {
         res.writeHead(204);
@@ -40,6 +43,9 @@ export function handleLogin(req: IncomingMessage, res: ServerResponse) {
         const token = createToken(userId);
 
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ token }));
+        res.end(JSON.stringify({
+            token,
+            userId
+        }));
     })
 }
