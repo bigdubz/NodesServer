@@ -4,33 +4,30 @@ import { MessageDB } from "../db";
 
 export async function handleHistory(req: IncomingMessage, res: ServerResponse) {
 
-    const origin = req.headers.origin;
-    if (origin) {
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-        res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    }
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
     if (req.method === "OPTIONS") {
-        res.writeHead(204);
+        res.statusCode = 204;
         return res.end();
     }
 
     if (req.method !== "GET") {
-        res.writeHead(405);
+        res.statusCode = 405;
         return res.end("Method not allowed");
     }
 
     const authHeader = req.headers["authorization"];
     if (!authHeader?.startsWith("Bearer ")) {
-        res.writeHead(401);
+        res.statusCode = 401;
         return res.end("Missing or invalid Authorization header");
     }
 
     const token = authHeader.slice("Bearer ".length);
     const decoded = verifyToken(token);
     if (!decoded) {
-        res.writeHead(401);
+        res.statusCode = 401;
         return res.end("Invalid token");
     }
 
@@ -43,7 +40,7 @@ export async function handleHistory(req: IncomingMessage, res: ServerResponse) {
     const limit = url.searchParams.get("limit");
 
     if (!peer) {
-        res.writeHead(400);
+        res.statusCode = 400;
         return res.end("Missing user parameter");
     }
 
@@ -52,6 +49,7 @@ export async function handleHistory(req: IncomingMessage, res: ServerResponse) {
 
     const rows = MessageDB.getMessages(userId, peer, beforeTs, limitNum);
 
-    res.writeHead(200, { "Content-Type": "application/json" });
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(rows));
 }
