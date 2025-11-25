@@ -5,6 +5,7 @@ import { routeMessage } from "./messageRouter.js";
 import { connectionManager } from "./connectionManager.js";
 import { handleLogin } from "./http/loginRoute.js";
 import { handleHistory } from "./http/historyRoute.js";
+import { handleConversations } from "./http/conversationRoute.js"
 import { setOffline } from "./presence/presenceStore.js";
 import { broadcast } from "./utils/broadcast.js";
 
@@ -18,6 +19,9 @@ const server = http.createServer((req, res) => {
     }
     if (path === "/history") {
         return handleHistory(req, res);
+    }
+    if (path === "/conversations") {
+        return handleConversations(req, res);
     }
 
     res.writeHead(200);

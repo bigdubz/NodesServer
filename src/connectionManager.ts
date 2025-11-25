@@ -15,6 +15,10 @@ class ConnectionManager {
         return this.connections.get(userId);
     }
 
+    has(userId: string): boolean {
+        return !!this.get(userId);
+    }
+
     getAll(): WebSocket[] {
         return Array.from(this.connections.values());
     }

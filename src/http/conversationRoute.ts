@@ -1,8 +1,8 @@
-import { IncomingMessage, ServerResponse } from "http";
-import { verifyToken } from "../auth/verifyToken.js";
-import { MessageDB } from "../db";
+import {IncomingMessage, ServerResponse} from "http";
+import {verifyToken} from "../auth/verifyToken";
+import {MessageDB} from "../db";
 
-export async function handleHistory(req: IncomingMessage, res: ServerResponse) {
+export async function handleConversations(req: IncomingMessage, res: ServerResponse) {
 
     const origin = req.headers.origin;
     if (origin) {
@@ -28,30 +28,14 @@ export async function handleHistory(req: IncomingMessage, res: ServerResponse) {
     }
 
     const token = authHeader.slice("Bearer ".length);
-    const decoded = verifyToken(token);
-    if (!decoded) {
+    const userId = verifyToken(token);
+    if (!userId) {
         res.writeHead(401);
         return res.end("Invalid token");
     }
 
-    const userId: string = decoded;
-
-    // dummy, doesn't matter
-    const url = new URL(req.url!, "http://localhost");
-    const peer = url.searchParams.get("user");
-    const before = url.searchParams.get("before");
-    const limit = url.searchParams.get("limit");
-
-    if (!peer) {
-        res.writeHead(400);
-        return res.end("Missing user parameter");
-    }
-
-    const beforeTs = before ? Number(before) : Date.now();
-    const limitNum = limit ? Number(limit) : 50;
-
-    const rows = MessageDB.getMessages(userId, peer, beforeTs, limitNum);
+    const conversations = MessageDB.getConversations(userId)
 
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(rows));
+    res.end(JSON.stringify(conversations));
 }

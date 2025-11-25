@@ -86,6 +86,14 @@ export type MessageRow = {
     read: number;      // 0 or 1
 };
 
+export type ConversationRow = {
+    peerId: string;
+    lastMessage: string;
+    lastTimestamp: number;
+    unreadCount: number;
+    isOnline: boolean;
+}
+
 export type ChatPayLoad = {
     messageId: string;
     fromUserId: string;

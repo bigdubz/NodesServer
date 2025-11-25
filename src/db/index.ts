@@ -1,4 +1,5 @@
-import type { MessageRow } from "../types.js"
+import type { MessageRow, ConversationRow } from "../types.js"
+import { connectionManager } from "../connectionManager.js"
 import Database from "better-sqlite3"
 import fs from "fs";
 import path from "path";
@@ -60,6 +61,32 @@ const getSenderStmt = db.prepare(`
     WHERE messageId = ?
 `);
 
+const getPeersStmt = db.prepare(`
+    SELECT DISTINCT
+        CASE
+            WHEN fromUserId = ? THEN toUserId
+            ELSE fromUserId
+        END AS peerId
+    FROM messages
+    WHERE fromUserId = ? OR toUserId = ?
+`);
+
+const getLastMessageStmt = db.prepare(`
+    SELECT text, createdAt
+    FROM messages
+    WHERE (fromUserId = ? AND toUserId = ?)
+       OR (fromUserId = ? AND toUserId = ?)
+    ORDER BY createdAt DESC
+    LIMIT 1
+`);
+
+const countUnreadStmt = db.prepare(`
+    SELECT COUNT(*) AS unreadCount
+    FROM messages
+    WHERE fromUserId = ?
+      AND toUserId = ?
+      AND seen = 0
+`);
 
 
 export const MessageDB = {
@@ -100,5 +127,29 @@ export const MessageDB = {
         }
 
         return row.fromUserId;
+    },
+
+    getConversations(userId: string): ConversationRow[] {
+        const peers = getPeersStmt.all(userId, userId, userId) as { peerId: string }[];
+
+        return peers.map(p => {
+            const peerId = p.peerId;
+
+            const last = getLastMessageStmt.get(userId, peerId, peerId, userId) as {
+                text: string;
+                createdAt: number;
+            }
+
+            const unread = countUnreadStmt.get(peerId, userId) as { unreadCount: number };
+            const isOnline = connectionManager.has(peerId)
+
+            return {
+                peerId,
+                lastMessage: last?.text ?? "",
+                lastTimestamp: last?.createdAt ?? 0,
+                unreadCount: unread.unreadCount,
+                isOnline
+            }
+        })
     }
 };
