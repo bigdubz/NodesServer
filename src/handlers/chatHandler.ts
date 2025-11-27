@@ -17,7 +17,7 @@ export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
         return;
     }
 
-    const { toUserId, text } = msg.payload;
+    const { toUserId, text, clientId } = msg.payload;
     const createdAt = Date.now();
     const messageId = crypto.randomUUID();
 
@@ -28,7 +28,8 @@ export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
             fromUserId,
             text,
             messageId,
-            createdAt
+            createdAt,
+            clientId
         }
     };
 
@@ -52,14 +53,14 @@ export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
         ws.send(
             JSON.stringify({
                 type: "MESSAGE_DELIVERED",
-                payload: { messageId: serverMsg.payload.messageId }
+                payload: { messageId: serverMsg.payload.messageId, clientId }
             })
         );
     }
 }
 
 export function handleMessageSeen(_ws: WebSocket, msg: ClientMessageSeen) {
-    const { messageId } = msg.payload;
+    const { messageId, clientId } = msg.payload;
 
     MessageDB.markSeen(messageId);
 
@@ -69,7 +70,7 @@ export function handleMessageSeen(_ws: WebSocket, msg: ClientMessageSeen) {
     if (sender && sender.readyState === sender.OPEN) {
         sender.send(JSON.stringify({
             type: "MESSAGE_SEEN",
-            payload: { messageId }
+            payload: { messageId, clientId }
         }));
     }
 }

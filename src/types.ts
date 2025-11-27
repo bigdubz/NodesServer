@@ -5,12 +5,12 @@ export type ClientAuthMessage = {
 
 export type ClientChatMessage = {
     type: "CHAT_MESSAGE";
-    payload: { toUserId: string; text: string };
+    payload: { toUserId: string; text: string; clientId: string };
 };
 
 export type ClientMessageSeen = {
     type: "MESSAGE_SEEN";
-    payload: { messageId: string };
+    payload: { messageId: string; clientId: string };
 }
 
 export type ClientTyping = {
@@ -40,17 +40,18 @@ export type ServerChatMessage = {
         text: string;
         messageId: string;
         createdAt: number;
+        clientId: string;
     }
 }
 
 export type ServerMessageDelivered = {
     type: "MESSAGE_DELIVERED";
-    payload: { messageId: string }
+    payload: { messageId: string; clientId: string }
 }
 
 export type ServerMessageSeen = {
     type: "MESSAGE_SEEN";
-    payload: { messageId: string };
+    payload: { messageId: string; clientId: string };
 }
 
 export type ServerError = {
