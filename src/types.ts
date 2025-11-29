@@ -10,7 +10,7 @@ export type ClientChatMessage = {
 
 export type ClientMessageSeen = {
     type: "MESSAGE_SEEN";
-    payload: { messageId: string; clientId: string };
+    payload: { messageId: string };
 }
 
 export type ClientTyping = {
@@ -40,7 +40,7 @@ export type ServerChatMessage = {
         text: string;
         messageId: string;
         createdAt: number;
-        clientId: string;
+        isOnline: boolean;
     }
 }
 
@@ -51,7 +51,12 @@ export type ServerMessageDelivered = {
 
 export type ServerMessageSeen = {
     type: "MESSAGE_SEEN";
-    payload: { messageId: string; clientId: string };
+    payload: { messageId: string };
+}
+
+export type serverTyping = {
+    type: "USER_TYPING";
+    payload: { fromUserId: string; isTyping: boolean };
 }
 
 export type ServerError = {
@@ -100,4 +105,5 @@ export type ChatPayLoad = {
     fromUserId: string;
     text: string;
     createdAt: number;
+    isOnline: boolean;
 }

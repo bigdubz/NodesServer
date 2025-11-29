@@ -22,17 +22,6 @@ export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
     const messageId = crypto.randomUUID();
 
 
-    const serverMsg: ServerChatMessage = {
-        type: "CHAT_MESSAGE",
-        payload: {
-            fromUserId,
-            text,
-            messageId,
-            createdAt,
-            clientId
-        }
-    };
-
     MessageDB.saveMessage({
         messageId,
         fromUserId,
@@ -40,27 +29,36 @@ export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
         text,
         createdAt
     })
-    console.log("Message saved to DB:", serverMsg.payload);
 
     const target = connectionManager.get(toUserId);
 
     if (target && target.readyState === target.OPEN) {
+        const serverMsg: ServerChatMessage = {
+            type: "CHAT_MESSAGE",
+            payload: {
+                fromUserId,
+                text,
+                messageId,
+                createdAt,
+                isOnline: true
+            }
+        };
         target.send(JSON.stringify(serverMsg));
 
         MessageDB.markDelivered(messageId);
-
-        // send ACK to sender
-        ws.send(
-            JSON.stringify({
-                type: "MESSAGE_DELIVERED",
-                payload: { messageId: serverMsg.payload.messageId, clientId }
-            })
-        );
     }
+
+    // send ACK to sender
+    ws.send(
+        JSON.stringify({
+            type: "MESSAGE_DELIVERED",
+            payload: { messageId: messageId, clientId }
+        })
+    );
 }
 
 export function handleMessageSeen(_ws: WebSocket, msg: ClientMessageSeen) {
-    const { messageId, clientId } = msg.payload;
+    const { messageId } = msg.payload;
 
     MessageDB.markSeen(messageId);
 
@@ -70,7 +68,7 @@ export function handleMessageSeen(_ws: WebSocket, msg: ClientMessageSeen) {
     if (sender && sender.readyState === sender.OPEN) {
         sender.send(JSON.stringify({
             type: "MESSAGE_SEEN",
-            payload: { messageId, clientId }
+            payload: { messageId }
         }));
     }
 }

@@ -39,13 +39,14 @@ export function handleAuth(ws: WebSocket, msg: ClientAuthMessage ): void {
     const undelivered = MessageDB.getUndeliveredMessages(userId);
 
     for (const msg of undelivered) {
-
         const payload: ChatPayLoad = {
             messageId: msg.messageId,
             fromUserId: msg.fromUserId,
             text: msg.text,
-            createdAt: msg.createdAt
+            createdAt: msg.createdAt,
+            isOnline: false
         }
+
         ws.send(JSON.stringify({
             type: "CHAT_MESSAGE",
             payload
