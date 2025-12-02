@@ -54,7 +54,7 @@ export type ServerMessageSeen = {
     payload: { messageId: string };
 }
 
-export type serverTyping = {
+export type ServerTyping = {
     type: "USER_TYPING";
     payload: { fromUserId: string; isTyping: boolean };
 }

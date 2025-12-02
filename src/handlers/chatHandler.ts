@@ -21,7 +21,6 @@ export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
     const createdAt = Date.now();
     const messageId = crypto.randomUUID();
 
-
     MessageDB.saveMessage({
         messageId,
         fromUserId,
