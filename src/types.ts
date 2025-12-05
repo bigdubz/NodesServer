@@ -1,12 +1,20 @@
 export type ClientAuthMessage = {
     type: "AUTH";
-    payload: { userId: string; token: string };
+    payload: {
+        userId: string;
+        token: string
+    };
 };
 
 export type ClientChatMessage = {
     type: "CHAT_MESSAGE";
-    payload: { toUserId: string; text: string; clientId: string };
-};
+    payload: {
+        toUserId: string;
+        text: string;
+        clientId: string;
+        replyingTo: string | null
+    };
+}
 
 export type ClientMessageSeen = {
     type: "MESSAGE_SEEN";
@@ -41,22 +49,21 @@ export type ServerChatMessage = {
         messageId: string;
         createdAt: number;
         isOnline: boolean;
+        replyingTo: string | null;
     }
 }
 
 export type ServerMessageDelivered = {
     type: "MESSAGE_DELIVERED";
-    payload: { messageId: string; clientId: string }
+    payload: {
+        messageId: string;
+        clientId: string
+    }
 }
 
 export type ServerMessageSeen = {
     type: "MESSAGE_SEEN";
     payload: { messageId: string };
-}
-
-export type ServerTyping = {
-    type: "USER_TYPING";
-    payload: { fromUserId: string; isTyping: boolean };
 }
 
 export type ServerError = {
@@ -90,6 +97,7 @@ export type MessageRow = {
     createdAt: number;
     delivered: number; // 0 or 1
     read: number;      // 0 or 1
+    replyingTo: string | null;
 };
 
 export type ConversationRow = {
@@ -106,4 +114,5 @@ export type ChatPayLoad = {
     text: string;
     createdAt: number;
     isOnline: boolean;
+    replyingTo: string | null;
 }

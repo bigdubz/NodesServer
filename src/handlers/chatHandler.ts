@@ -17,7 +17,7 @@ export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
         return;
     }
 
-    const { toUserId, text, clientId } = msg.payload;
+    const { toUserId, text, clientId, replyingTo } = msg.payload;
     const createdAt = Date.now();
     const messageId = crypto.randomUUID();
 
@@ -26,7 +26,8 @@ export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
         fromUserId,
         toUserId,
         text,
-        createdAt
+        createdAt,
+        replyingTo
     })
 
     const target = connectionManager.get(toUserId);
@@ -39,7 +40,8 @@ export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
                 text,
                 messageId,
                 createdAt,
-                isOnline: true
+                isOnline: true,
+                replyingTo
             }
         };
         target.send(JSON.stringify(serverMsg));

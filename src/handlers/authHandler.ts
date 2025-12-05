@@ -44,7 +44,8 @@ export function handleAuth(ws: WebSocket, msg: ClientAuthMessage ): void {
             fromUserId: msg.fromUserId,
             text: msg.text,
             createdAt: msg.createdAt,
-            isOnline: false
+            isOnline: false,
+            replyingTo: msg.replyingTo
         }
 
         ws.send(JSON.stringify({

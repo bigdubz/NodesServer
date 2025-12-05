@@ -16,8 +16,12 @@ db.exec(schema);
 
 // Prepared statements
 const insertMessageStmt = db.prepare(`
-    INSERT INTO messages (messageId, fromUserId, toUserId, text, createdAt, delivered, seen)
-    VALUES (@messageId, @fromUserId, @toUserId, @text, @createdAt, 0, 0)
+    INSERT INTO messages (messageId, fromUserId, toUserId, text, createdAt, delivered, seen, replyingTo)
+    VALUES (@messageId, @fromUserId, @toUserId, @text, @createdAt, 0, 0, @replyingTo)
+`);
+
+const getMessageStmt = db.prepare(`
+    SELECT * FROM messages WHERE messageId = ?
 `);
 
 const markDeliveredStmt = db.prepare(`
@@ -96,8 +100,13 @@ export const MessageDB = {
         toUserId: string;
         text: string;
         createdAt: number;
+        replyingTo: string | null;
     }): void {
         insertMessageStmt.run(message);
+    },
+
+    getMessage(messageId: string): MessageRow {
+        return getMessageStmt.get(messageId) as MessageRow;
     },
 
     markDelivered(messageId: string): void {
