@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS messages (
     delivered INTEGER NOT NULL DEFAULT 0,
     seen INTEGER NOT NULL DEFAULT 0,
     replyingTo TEXT NULL,
+    reaction NVARCHAR(10) NULL,
     FOREIGN KEY (replyingTo) REFERENCES messages(messageId) ON DELETE SET NULL
 );
 

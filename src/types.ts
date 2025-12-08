@@ -16,6 +16,23 @@ export type ClientChatMessage = {
     };
 }
 
+export type ClientAddReaction = {
+    type: "ADD_REACTION";
+    payload: {
+        messageId: string;
+        reaction: string;
+        toUserId: string
+    };
+}
+
+export type ClientRemoveReaction = {
+    type: "REMOVE_REACTION";
+    payload: {
+        messageId: string;
+        toUserId: string
+    };
+}
+
 export type ClientMessageSeen = {
     type: "MESSAGE_SEEN";
     payload: { messageId: string };
@@ -29,7 +46,8 @@ export type ClientTyping = {
     }
 }
 
-export type ClientMessage = ClientAuthMessage | ClientChatMessage | ClientMessageSeen | ClientTyping;
+export type ClientMessage = ClientAuthMessage | ClientChatMessage | ClientMessageSeen | ClientTyping |
+    ClientAddReaction | ClientRemoveReaction;
 
 export type ServerAuthOK = {
     type: "AUTH_OK";
@@ -78,11 +96,27 @@ export type ServerUserOnline = {
 
 export type ServerUserOffline = {
     type: "USER_OFFLINE";
-    payload: { userId: string; lastSeen: number };
+    payload: {
+        userId: string;
+        lastSeen: number
+    };
+}
+
+export type ServerAddReaction = {
+    type: "ADD_REACTION";
+    payload: {
+        messageId: string;
+        reaction: string
+    }
+}
+
+export type ServerRemoveReaction = {
+    type: "REMOVE_REACTION";
+    payload: { messageId: string }
 }
 
 export type ServerMessage = ServerAuthOK | ServerAuthError | ServerChatMessage | ServerMessageDelivered |
-    ServerMessageSeen | ServerError | ServerUserOnline | ServerUserOffline;
+    ServerMessageSeen | ServerError | ServerUserOnline | ServerUserOffline | ServerAddReaction | ServerRemoveReaction;
 
 export type PresenceState = {
     online: boolean;

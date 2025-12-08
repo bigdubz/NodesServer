@@ -45,6 +45,14 @@ const getConversationStmt = db.prepare(`
     ORDER BY createdAt ASC
 `);
 
+const setReactionStmt = db.prepare(`
+    UPDATE messages SET reaction = @reaction WHERE messageId = @messageId
+`)
+
+const removeReactionStmt = db.prepare(`
+    UPDATE messages SET reaction = NULL WHERE messageId = @messageId
+`)
+
 const getMessagesStmt = db.prepare(`
     SELECT *
     FROM messages
@@ -160,5 +168,13 @@ export const MessageDB = {
                 isOnline
             }
         })
+    },
+
+    setReaction(messageId: string, reaction: string): void {
+        setReactionStmt.run({ messageId, reaction });
+    },
+
+    removeReaction(messageId: string): void {
+        removeReactionStmt.run({ messageId });
     }
 };
