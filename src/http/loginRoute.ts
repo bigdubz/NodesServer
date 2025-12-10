@@ -19,7 +19,7 @@ export function handleLogin(req: IncomingMessage, res: ServerResponse) {
         return res.end("Method not allowed");
     }
 
-    let body = "";
+    let body: string = "";
 
     req.on("data", chunk => (body += chunk))
     req.on("end", async () => {
@@ -31,13 +31,13 @@ export function handleLogin(req: IncomingMessage, res: ServerResponse) {
             return res.end("Invalid user or password");
         }
 
-        const ok = await bcrypt.compare(password, user.passwordHash);
+        const ok: boolean = await bcrypt.compare(password, user.passwordHash);
         if (!ok) {
             res.statusCode = 401;
             return res.end("Invalid user or password");
         }
 
-        const token = createToken(userId);
+        const token: string = createToken(userId);
 
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");

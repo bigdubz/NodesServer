@@ -1,10 +1,8 @@
 import type { WebSocket } from "ws";
 import type {
-    ClientChatMessage,
-    ServerChatMessage,
-    ClientMessageSeen,
-    ClientTyping,
-    ClientAddReaction, ClientRemoveReaction, ServerAddReaction, ServerRemoveReaction
+    ClientChatMessage, ClientMessageSeen, ClientTyping, ClientAddReaction, ClientRemoveReaction,
+    ServerChatMessage, ServerAddReaction, ServerRemoveReaction, ServerMessageDelivered, ServerMessageSeen,
+    ServerUserTyping
 } from "../types.js";
 import { connectionManager } from "../connectionManager.js";
 import { MessageDB } from "../db"
@@ -28,7 +26,7 @@ export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
         replyingTo
     })
 
-    const target = connectionManager.get(toUserId);
+    const target: WebSocket | undefined = connectionManager.get(toUserId);
 
     if (target && target.readyState === target.OPEN) {
         const serverMsg: ServerChatMessage = {
@@ -48,12 +46,10 @@ export function handleChatMessage(ws: WebSocket, msg: ClientChatMessage) {
     }
 
     // send ACK to sender
-    ws.send(
-        JSON.stringify({
+    ws.send(JSON.stringify({
             type: "MESSAGE_DELIVERED",
             payload: { messageId: messageId, clientId }
-        })
-    );
+    } as ServerMessageDelivered));
 }
 
 export function handleMessageSeen(_ws: WebSocket, msg: ClientMessageSeen) {
@@ -61,14 +57,14 @@ export function handleMessageSeen(_ws: WebSocket, msg: ClientMessageSeen) {
 
     MessageDB.markSeen(messageId);
 
-    const senderId = MessageDB.getSenderOfMessage(messageId);
-    const sender = connectionManager.get(senderId);
+    const senderId: string = MessageDB.getSenderOfMessage(messageId);
+    const sender: WebSocket | undefined = connectionManager.get(senderId);
 
     if (sender && sender.readyState === sender.OPEN) {
         sender.send(JSON.stringify({
             type: "MESSAGE_SEEN",
             payload: { messageId }
-        }));
+        } as ServerMessageSeen));
     }
 }
 
@@ -109,8 +105,7 @@ export function handleRemoveReaction(ws: WebSocket, msg: ClientRemoveReaction) {
     sender.send(JSON.stringify({
             type: "REMOVE_REACTION",
             payload: { messageId }
-        } as ServerRemoveReaction)
-    )
+    } as ServerRemoveReaction))
 
     const target: WebSocket | undefined = connectionManager.get(toUserId);
 
@@ -138,5 +133,5 @@ export function handleUserTyping(ws: WebSocket, msg: ClientTyping) {
             fromUserId,
             isTyping
         }
-    }));
+    } as ServerUserTyping));
 }

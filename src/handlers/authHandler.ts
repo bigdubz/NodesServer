@@ -1,5 +1,10 @@
 import type { WebSocket } from "ws";
-import type { ClientAuthMessage, ServerAuthError, ServerMessage, ChatPayLoad } from "../types.js";
+import type {
+    ClientAuthMessage,
+    ChatPayLoad,
+    ServerAuthError, ServerMessage, ServerMessageDelivered, ServerChatMessage,
+    MessageRow
+} from "../types.js";
 import { setOnline } from "../presence/presenceStore.js"
 import { broadcast } from "../utils/broadcast.js"
 import { connectionManager } from "../connectionManager.js";
@@ -9,7 +14,7 @@ import { MessageDB } from "../db";
 export function handleAuth(ws: WebSocket, msg: ClientAuthMessage ): void {
     const { userId, token } = msg.payload;
 
-    const verifiedUserId = verifyToken(token);
+    const verifiedUserId: string | null = verifyToken(token);
 
     if (!verifiedUserId || verifiedUserId !== userId) {
         const error: ServerAuthError = {
@@ -36,7 +41,7 @@ export function handleAuth(ws: WebSocket, msg: ClientAuthMessage ): void {
         payload: { userId }
     }
 
-    const undelivered = MessageDB.getUndeliveredMessages(userId);
+    const undelivered: MessageRow[] = MessageDB.getUndeliveredMessages(userId);
 
     for (const msg of undelivered) {
         const payload: ChatPayLoad = {
@@ -51,16 +56,16 @@ export function handleAuth(ws: WebSocket, msg: ClientAuthMessage ): void {
         ws.send(JSON.stringify({
             type: "CHAT_MESSAGE",
             payload
-        }))
+        } as ServerChatMessage))
 
         MessageDB.markDelivered(msg.messageId);
 
-        const sender = connectionManager.get(msg.fromUserId);
+        const sender: WebSocket | undefined = connectionManager.get(msg.fromUserId);
         if (sender && sender.readyState === sender.OPEN) {
             sender.send(JSON.stringify({
                 type: "MESSAGE_DELIVERED",
                 payload: { messageId: msg.messageId }
-            }));
+            } as ServerMessageDelivered));
         }
     }
 

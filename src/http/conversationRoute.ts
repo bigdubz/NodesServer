@@ -1,6 +1,7 @@
 import { IncomingMessage, ServerResponse } from "http";
 import { verifyToken } from "../auth/verifyToken";
 import { MessageDB } from "../db";
+import type {ConversationRow} from "../types";
 
 export async function handleConversations(req: IncomingMessage, res: ServerResponse) {
 
@@ -18,20 +19,20 @@ export async function handleConversations(req: IncomingMessage, res: ServerRespo
         return res.end("Method not allowed");
     }
 
-    const authHeader = req.headers["authorization"];
+    const authHeader: string | undefined = req.headers["authorization"];
     if (!authHeader?.startsWith("Bearer ")) {
         res.statusCode = 401;
         return res.end("Missing or invalid Authorization header");
     }
 
-    const token = authHeader.slice("Bearer ".length);
-    const userId = verifyToken(token);
+    const token: string = authHeader.slice("Bearer ".length);
+    const userId: string | null = verifyToken(token);
     if (!userId) {
         res.statusCode = 401;
         return res.end("Invalid token");
     }
 
-    const conversations = MessageDB.getConversations(userId)
+    const conversations: ConversationRow[] = MessageDB.getConversations(userId)
 
     res.statusCode = 200;
     res.setHeader("Content-Type", "application/json");

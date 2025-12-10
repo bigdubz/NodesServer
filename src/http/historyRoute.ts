@@ -1,6 +1,7 @@
 import { IncomingMessage, ServerResponse } from "http";
 import { verifyToken } from "../auth/verifyToken.js";
 import { MessageDB } from "../db";
+import type { MessageRow } from "../types";
 
 export async function handleHistory(req: IncomingMessage, res: ServerResponse) {
 
@@ -18,26 +19,24 @@ export async function handleHistory(req: IncomingMessage, res: ServerResponse) {
         return res.end("Method not allowed");
     }
 
-    const authHeader = req.headers["authorization"];
+    const authHeader: string | undefined = req.headers["authorization"];
     if (!authHeader?.startsWith("Bearer ")) {
         res.statusCode = 401;
         return res.end("Missing or invalid Authorization header");
     }
 
-    const token = authHeader.slice("Bearer ".length);
-    const decoded = verifyToken(token);
-    if (!decoded) {
+    const token: string = authHeader.slice("Bearer ".length);
+    const userId: string | null = verifyToken(token);
+    if (!userId) {
         res.statusCode = 401;
         return res.end("Invalid token");
     }
 
-    const userId: string = decoded;
-
-    // dummy, doesn't matter
+    // dummy. doesn't matter
     const url = new URL(req.url!, "http://localhost");
-    const peer = url.searchParams.get("user");
-    const before = url.searchParams.get("before");
-    const limit = url.searchParams.get("limit");
+    const peer: string | null = url.searchParams.get("user");
+    const before: string | null = url.searchParams.get("before");
+    const limit: string | null = url.searchParams.get("limit");
 
     if (!peer) {
         res.statusCode = 400;
@@ -47,7 +46,7 @@ export async function handleHistory(req: IncomingMessage, res: ServerResponse) {
     const beforeTs = before ? Number(before) : Date.now();
     const limitNum = limit ? Number(limit) : 50;
 
-    const rows = MessageDB.getMessages(userId, peer, beforeTs, limitNum);
+    const rows: MessageRow[] = MessageDB.getMessages(userId, peer, beforeTs, limitNum);
 
     res.statusCode = 200;
     res.setHeader("Content-Type", "application/json");

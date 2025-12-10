@@ -89,6 +89,14 @@ export type ServerError = {
     payload: { error: string }
 }
 
+export type ServerUserTyping = {
+    type: "USER_TYPING";
+    payload: {
+        fromUserId: string;
+        isTyping: boolean;
+    }
+}
+
 export type ServerUserOnline = {
     type: "USER_ONLINE";
     payload: { userId: string }

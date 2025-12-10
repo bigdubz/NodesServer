@@ -5,23 +5,18 @@ import fs from "fs";
 import path from "path";
 
 
-// resolve paths
-const dbPath = path.join(process.cwd(), "src/db/messages.db");
-const schemaPath = path.join(process.cwd(), "src/db/schema.sql");
+const dbPath: string = path.join(process.cwd(), "src/db/messages.db");
+const schemaPath: string = path.join(process.cwd(), "src/db/schema.sql");
 
 const db = new Database(dbPath);
 
-const schema = fs.readFileSync(schemaPath, "utf8");
+const schema: string = fs.readFileSync(schemaPath, "utf8");
 db.exec(schema);
 
-// Prepared statements
+
 const insertMessageStmt = db.prepare(`
     INSERT INTO messages (messageId, fromUserId, toUserId, text, createdAt, delivered, seen, replyingTo)
     VALUES (@messageId, @fromUserId, @toUserId, @text, @createdAt, 0, 0, @replyingTo)
-`);
-
-const getMessageStmt = db.prepare(`
-    SELECT * FROM messages WHERE messageId = ?
 `);
 
 const markDeliveredStmt = db.prepare(`
@@ -35,13 +30,6 @@ const markSeenStmt = db.prepare(`
 const getUndeliveredStmt = db.prepare(`
     SELECT * FROM messages
     WHERE toUserId = ? AND delivered = 0
-    ORDER BY createdAt ASC
-`);
-
-const getConversationStmt = db.prepare(`
-    SELECT * FROM messages
-    WHERE (fromUserId = @userA AND toUserId = @userB)
-       OR (fromUserId = @userB AND toUserId = @userA)
     ORDER BY createdAt ASC
 `);
 
@@ -113,10 +101,6 @@ export const MessageDB = {
         insertMessageStmt.run(message);
     },
 
-    getMessage(messageId: string): MessageRow {
-        return getMessageStmt.get(messageId) as MessageRow;
-    },
-
     markDelivered(messageId: string): void {
         markDeliveredStmt.run(messageId);
     },
@@ -127,10 +111,6 @@ export const MessageDB = {
 
     getUndeliveredMessages(userId: string): MessageRow[] {
         return getUndeliveredStmt.all(userId) as MessageRow[];
-    },
-
-    getConversation(userA: string, userB: string): MessageRow[] {
-        return getConversationStmt.all({ userA, userB }) as MessageRow[];
     },
 
     getMessages(me: string, them: string, before: number, limit: number): MessageRow[] {
@@ -150,7 +130,7 @@ export const MessageDB = {
         const peers = getPeersStmt.all(userId, userId, userId) as { peerId: string }[];
 
         return peers.map(p => {
-            const peerId = p.peerId;
+            const peerId: string = p.peerId;
 
             const last = getLastMessageStmt.get(userId, peerId, peerId, userId) as {
                 text: string;
@@ -158,7 +138,7 @@ export const MessageDB = {
             }
 
             const unread = countUnreadStmt.get(peerId, userId) as { unreadCount: number };
-            const isOnline = connectionManager.has(peerId)
+            const isOnline: boolean = connectionManager.has(peerId)
 
             return {
                 peerId,

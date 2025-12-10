@@ -1,4 +1,4 @@
-import type { ClientMessage } from "./types.js";
+import type {ClientMessage, ServerUserOffline} from "./types.js";
 import http from "http";
 import { WebSocketServer } from "ws";
 import { routeMessage } from "./messageRouter.js";
@@ -52,7 +52,13 @@ wss.on("connection", (ws) => {
         const userId = (ws as any).userId;
         if (!userId) return;
         setOffline(userId);
-        broadcast({ type: "USER_OFFLINE", payload: { userId, lastSeen: Date.now() } });
+        broadcast({
+            type: "USER_OFFLINE",
+            payload: {
+                userId,
+                lastSeen: Date.now()
+            }
+        } as ServerUserOffline);
         connectionManager.remove(userId);
         console.log("Client disconnected (", userId, ")");
     });

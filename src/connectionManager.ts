@@ -1,7 +1,7 @@
 import type { WebSocket } from "ws";
 
 class ConnectionManager {
-    private connections = new Map<string, WebSocket>();
+    private connections: Map<string, WebSocket> = new Map<string, WebSocket>();
 
     add(userId: string, ws: WebSocket): void {
         this.connections.set(userId, ws);

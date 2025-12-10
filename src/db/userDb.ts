@@ -14,14 +14,14 @@ const insertUserStmt = db.prepare(`
 `);
 
 export const UserDB = {
-    getUser(userId: string) {
+    getUser(userId: string): { userId: string; passwordHash: string } | undefined {
         return getUserStmt.get(userId) as {
             userId: string;
             passwordHash: string;
         } | undefined;
     },
 
-    createUser(userId: string, passwordHash: string) {
+    createUser(userId: string, passwordHash: string): void {
         insertUserStmt.run(userId, passwordHash);
     }
 };

@@ -1,6 +1,6 @@
 import type { PresenceState } from "../types.js"
 
-export const presence: Record<string, PresenceState> = {}
+export const presence: Record<string, PresenceState> = { }
 
 export function setOnline(userId: string) {
     presence[userId] = { online: true, lastSeen: null };
