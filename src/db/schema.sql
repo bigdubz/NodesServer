@@ -16,7 +16,17 @@ CREATE TABLE IF NOT EXISTS messages (
     FOREIGN KEY (replyingTo) REFERENCES messages(messageId) ON DELETE SET NULL
 );
 
+CREATE TABLE IF NOT EXISTS message_reactions (
+    messageId TEXT NOT NULL,
+    userId TEXT NOT NULL,
+    reaction NVARCHAR(10) NOT NULL,
+    PRIMARY KEY (messageId, userId),
+    FOREIGN KEY (messageId) REFERENCES messages(messageId) ON DELETE CASCADE
+);
+
+
 CREATE INDEX IF NOT EXISTS idx_messages_toUserId ON messages (toUserId);
 
 CREATE INDEX IF NOT EXISTS idx_messages_fromUserId ON messages (fromUserId);
 
+CREATE INDEX IF NOT EXISTS idx_reactions_messageId ON message_reactions(messageId);

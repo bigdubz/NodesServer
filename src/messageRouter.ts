@@ -2,12 +2,11 @@ import type { WebSocket } from "ws";
 import type { ClientMessage, ServerError } from "./types.js";
 import { handleAuth } from "./handlers/authHandler.js";
 import {
-    handleAddReaction,
     handleChatMessage,
     handleMessageSeen,
-    handleRemoveReaction,
     handleUserTyping
 } from "./handlers/chatHandler.js";
+import { handleAddReaction, handleRemoveReaction } from "./handlers/reactionHandler.js";
 
 export function routeMessage(ws: WebSocket, msg: ClientMessage): void {
     switch (msg.type) {

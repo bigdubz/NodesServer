@@ -68,56 +68,6 @@ export function handleMessageSeen(_ws: WebSocket, msg: ClientMessageSeen) {
     }
 }
 
-export function handleAddReaction(ws: WebSocket, msg: ClientAddReaction) {
-    const sender = (ws as any)
-    const fromUserId = sender.userId;
-    const { messageId, reaction, toUserId } = msg.payload;
-
-    if (!fromUserId) return // not authenticated
-
-    MessageDB.setReaction(messageId, reaction)
-
-    sender.send(JSON.stringify({
-        type: "ADD_REACTION",
-        payload: { messageId, reaction }
-        } as ServerAddReaction)
-    )
-
-    const target: WebSocket | undefined = connectionManager.get(toUserId);
-    if (!target) return
-
-    target.send(JSON.stringify({
-        type: "ADD_REACTION",
-        payload: { messageId, reaction }
-        } as ServerAddReaction)
-    )
-}
-
-export function handleRemoveReaction(ws: WebSocket, msg: ClientRemoveReaction) {
-    const sender = (ws as any)
-    const fromUserId = sender.userId;
-    const { messageId, toUserId } = msg.payload;
-
-    if (!fromUserId) return // not authenticated
-
-    MessageDB.removeReaction(messageId)
-
-    sender.send(JSON.stringify({
-            type: "REMOVE_REACTION",
-            payload: { messageId }
-    } as ServerRemoveReaction))
-
-    const target: WebSocket | undefined = connectionManager.get(toUserId);
-
-    if (!target) return
-
-    target.send(JSON.stringify({
-            type: "REMOVE_REACTION",
-            payload: { messageId }
-        } as ServerRemoveReaction)
-    )
-}
-
 export function handleUserTyping(ws: WebSocket, msg: ClientTyping) {
     const fromUserId = (ws as any).userId;
     const { toUserId, isTyping } = msg.payload;

@@ -114,13 +114,17 @@ export type ServerAddReaction = {
     type: "ADD_REACTION";
     payload: {
         messageId: string;
+        userId: string;
         reaction: string
     }
 }
 
 export type ServerRemoveReaction = {
     type: "REMOVE_REACTION";
-    payload: { messageId: string }
+    payload: {
+        messageId: string,
+        userId: string
+    }
 }
 
 export type ServerMessage = ServerAuthOK | ServerAuthError | ServerChatMessage | ServerMessageDelivered |
@@ -131,7 +135,7 @@ export type PresenceState = {
     lastSeen: number | null;
 }
 
-export type MessageRow = {
+export interface MessageRow {
     messageId: string;
     fromUserId: string;
     toUserId: string;
@@ -140,7 +144,8 @@ export type MessageRow = {
     delivered: number; // 0 or 1
     read: number;      // 0 or 1
     replyingTo: string | null;
-};
+    reactions: Record<string, string> | null;
+}
 
 export type ConversationRow = {
     peerId: string;

@@ -1,7 +1,6 @@
 import { IncomingMessage, ServerResponse } from "http";
 import { verifyToken } from "../auth/verifyToken.js";
 import { MessageDB } from "../db";
-import type { MessageRow } from "../types";
 
 export async function handleHistory(req: IncomingMessage, res: ServerResponse) {
 
@@ -46,7 +45,7 @@ export async function handleHistory(req: IncomingMessage, res: ServerResponse) {
     const beforeTs = before ? Number(before) : Date.now();
     const limitNum = limit ? Number(limit) : 50;
 
-    const rows: MessageRow[] = MessageDB.getMessages(userId, peer, beforeTs, limitNum);
+    const rows = MessageDB.getMessages(userId, peer, beforeTs, limitNum); // inferred as MessageRow[]
 
     res.statusCode = 200;
     res.setHeader("Content-Type", "application/json");

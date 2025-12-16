@@ -34,25 +34,31 @@ const getUndeliveredStmt = db.prepare(`
 `);
 
 const setReactionStmt = db.prepare(`
-    UPDATE messages SET reaction = @reaction WHERE messageId = @messageId
+    INSERT INTO message_reactions (messageId, userId, reaction) VALUES (@messageId, @userId, @reaction)
 `)
 
 const removeReactionStmt = db.prepare(`
-    UPDATE messages SET reaction = NULL WHERE messageId = @messageId
+    DELETE FROM message_reactions WHERE messageId = @messageId AND userId = @userId
 `)
 
 const getMessagesStmt = db.prepare(`
-    SELECT *
-    FROM messages
-    WHERE 
+    SELECT
+        m.*,
+        json_group_object(r.userId, r.reaction)
+            FILTER (WHERE r.userId IS NOT NULL) AS reactions
+    FROM messages m
+             LEFT JOIN message_reactions r
+                       ON r.messageId = m.messageId
+    WHERE
         (
-            (fromUserId = @me AND toUserId = @them)
-            OR
-            (fromUserId = @them AND toUserId = @me)
-        )
-        AND createdAt < @before
-    ORDER BY createdAt DESC
-    LIMIT @limit
+            (m.fromUserId = @me AND m.toUserId = @them)
+                OR
+            (m.fromUserId = @them AND m.toUserId = @me)
+            )
+      AND m.createdAt < @before
+    GROUP BY m.messageId
+    ORDER BY m.createdAt DESC
+        LIMIT @limit;
 `);
 
 const getSenderStmt = db.prepare(`
@@ -88,6 +94,17 @@ const countUnreadStmt = db.prepare(`
       AND seen = 0
 `);
 
+interface MessageRowDB {
+    messageId: string;
+    fromUserId: string;
+    toUserId: string;
+    text: string;
+    createdAt: number;
+    delivered: number;
+    seen: number;
+    replyingTo: string | null;
+    reactions: string | null; // 👈 JSON string from SQLite
+}
 
 export const MessageDB = {
     saveMessage(message: {
@@ -113,8 +130,14 @@ export const MessageDB = {
         return getUndeliveredStmt.all(userId) as MessageRow[];
     },
 
-    getMessages(me: string, them: string, before: number, limit: number): MessageRow[] {
-        return getMessagesStmt.all({ me, them, before, limit }) as unknown as MessageRow[];
+    getMessages(me: string, them: string, before: number, limit: number): MessageRowDB[] {
+        const rows: MessageRowDB[] = getMessagesStmt.all({ me, them, before, limit }) as MessageRowDB[];
+        return rows.map(row => ({
+            ...row,
+            reactions: row.reactions
+                ? JSON.parse(row.reactions)
+                : null
+        }))
     },
 
     getSenderOfMessage(messageId: string): string {
@@ -150,11 +173,11 @@ export const MessageDB = {
         })
     },
 
-    setReaction(messageId: string, reaction: string): void {
-        setReactionStmt.run({ messageId, reaction });
+    setReaction(messageId: string, userId: string, reaction: string): void {
+        setReactionStmt.run({ messageId, userId, reaction });
     },
 
-    removeReaction(messageId: string): void {
-        removeReactionStmt.run({ messageId });
+    removeReaction(messageId: string, userId: string): void {
+        removeReactionStmt.run({ messageId, userId });
     }
 };
