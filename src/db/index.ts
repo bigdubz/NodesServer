@@ -160,7 +160,8 @@ export const MessageDB = {
                 createdAt: number;
             }
 
-            const unread = countUnreadStmt.get(peerId, userId) as { unreadCount: number };
+            const unread = peerId == userId ? { unreadCount: 0 }
+                : countUnreadStmt.get(peerId, userId) as { unreadCount: number };
             const isOnline: boolean = connectionManager.has(peerId)
 
             return {
