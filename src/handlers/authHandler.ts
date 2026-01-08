@@ -2,11 +2,11 @@ import type { WebSocket } from "ws";
 import type {
     ClientAuthMessage,
     ChatPayLoad,
-    ServerAuthError, ServerMessage, ServerMessageDelivered, ServerChatMessage,
-    MessageRow
+    ServerAuthError, ServerMessageDelivered, ServerChatMessage,
+    MessageRow, ServerUserOnline, ServerAuthOK
 } from "../types.js";
 import { setOnline } from "../presence/presenceStore.js"
-import { broadcast } from "../utils/broadcast.js"
+import { broadcast, sendPresence } from "../utils/broadcast.js"
 import { connectionManager } from "../connectionManager.js";
 import { verifyToken } from "../auth/verifyToken.js";
 import { MessageDB } from "../db";
@@ -30,18 +30,13 @@ export function handleAuth(ws: WebSocket, msg: ClientAuthMessage ): void {
     connectionManager.add(userId, ws);
 
     setOnline(userId);
-
-    broadcast({
-        type: "USER_ONLINE",
-        payload: { userId }
-    });
-
-    const response: ServerMessage = {
+    ws.send(JSON.stringify({
         type: "AUTH_OK",
         payload: { userId }
-    }
+    } as ServerAuthOK));
 
     const undelivered: MessageRow[] = MessageDB.getUndeliveredMessages(userId);
+
 
     for (const msg of undelivered) {
         const payload: ChatPayLoad = {
@@ -69,5 +64,9 @@ export function handleAuth(ws: WebSocket, msg: ClientAuthMessage ): void {
         }
     }
 
-    ws.send(JSON.stringify(response));
+    broadcast({
+        type: "USER_ONLINE",
+        payload: { userId }
+    } as ServerUserOnline);
+    sendPresence(userId);
 }

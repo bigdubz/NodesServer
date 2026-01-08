@@ -1,4 +1,4 @@
-import type { WebSocket } from "ws";
+import { WebSocket } from "ws";
 
 class ConnectionManager {
     private connections: Map<string, WebSocket> = new Map<string, WebSocket>();
@@ -21,6 +21,14 @@ class ConnectionManager {
 
     getAll(): WebSocket[] {
         return Array.from(this.connections.values());
+    }
+
+    getAllOnline(): WebSocket[] {
+        return this.getAll().filter(ws => ws.readyState === WebSocket.OPEN);
+    }
+
+    getUserIdsOnline(): string[] {
+        return this.getAllOnline().map(ws => (ws as any).userId);
     }
 }
 
