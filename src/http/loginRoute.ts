@@ -21,6 +21,7 @@ export function handleLogin(req: IncomingMessage, res: ServerResponse) {
 
     let body: string = "";
 
+    // todo: e2ee logging in idk how this is supposed to work
     req.on("data", chunk => (body += chunk))
     req.on("end", async () => {
         const { userId, password } = JSON.parse(body);

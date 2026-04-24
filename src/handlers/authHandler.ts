@@ -1,25 +1,19 @@
 import type { WebSocket } from "ws";
-import type {
-    ClientAuthMessage,
-    ChatPayLoad,
-    ServerAuthError, ServerMessageDelivered, ServerChatMessage,
-    MessageRow, ServerUserOnline, ServerAuthOK
-} from "../types.js";
-import { setOnline } from "../presence/presenceStore.js"
+import type { ClientMessage, ServerMessage, } from "../types.js";
 import { broadcast, sendPresence } from "../utils/broadcast.js"
 import { connectionManager } from "../connectionManager.js";
 import { verifyToken } from "../auth/verifyToken.js";
-import { MessageDB } from "../db";
+import { MessageDB } from "../db/undeliveredMessages";
 
-export function handleAuth(ws: WebSocket, msg: ClientAuthMessage ): void {
+export function handleAuth(ws: WebSocket, msg: Extract<ClientMessage, { type: "AUTH"}> ): void {
     const { userId, token } = msg.payload;
 
     const verifiedUserId: string | null = verifyToken(token);
 
     if (!verifiedUserId || verifiedUserId !== userId) {
-        const error: ServerAuthError = {
-            type: "AUTH_ERROR",
-            payload: { error: "Invalid or expired token" }
+        const error: ServerMessage = {
+            type: "ERROR",
+            payload: { code: "200", error: "Invalid or expired token" }
         };
         ws.send(JSON.stringify(error));
         ws.close();
@@ -29,12 +23,12 @@ export function handleAuth(ws: WebSocket, msg: ClientAuthMessage ): void {
     (ws as any).userId = userId;
     connectionManager.add(userId, ws);
 
-    setOnline(userId);
     ws.send(JSON.stringify({
         type: "AUTH_OK",
         payload: { userId }
-    } as ServerAuthOK));
+    } as ServerMessage));
 
+    // todo: this should now point to the new undeliveredMessages table
     const undelivered: MessageRow[] = MessageDB.getUndeliveredMessages(userId);
 
 

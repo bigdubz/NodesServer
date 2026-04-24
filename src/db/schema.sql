@@ -24,48 +24,73 @@ CREATE TABLE IF NOT EXISTS message_reactions (
     FOREIGN KEY (messageId) REFERENCES messages(messageId) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS user_bundles (
-    userId TEXT PRIMARY KEY,
-    deviceId INTEGER NOT NULL,
-    identityKey BLOB NOT NULL,
-    signedPreKey BLOB NOT NULL,
-    preKeySignature BLOB NOT NULL,   -- Signature of SPK using private IK
-    lastUpdated INTEGER NOT NULL,
-    FOREIGN KEY (userId) REFERENCES users(userId)
-);
-
 CREATE TABLE IF NOT EXISTS devices (
     userId TEXT NOT NULL,
-    deviceId INTEGER NOT NULL,       -- Small int (1, 2, 3...)
+    deviceId TEXT NOT NULL,
     registrationId INTEGER NOT NULL, -- Random int to prevent session collisions
+
+    signingKey BLOB NOT NULL,
     identityKey BLOB NOT NULL,       -- The Public Identity Key (IK) for this specific device
+
     pushToken TEXT,                  -- FCM/APNs token for wake-up calls
     lastSeen INTEGER NOT NULL,
+
     PRIMARY KEY (userId, deviceId),
     FOREIGN KEY (userId) REFERENCES users(userId)
 );
 
+CREATE TABLE IF NOT EXISTS signed_prekeys (
+    userId TEXT NOT NULL,
+    deviceId TEXT NOT NULL,
+
+    keyId INTEGER NOT NULL,
+    publicKey BLOB NOT NULL, -- SPK
+    signature BLOB NOT NULL, -- signed by signingPublicKey
+
+    createdAt INTEGER NOT NULL,
+
+    PRIMARY KEY (userId, deviceId, keyId),
+    FOREIGN KEY (userId, deviceId)
+        REFERENCES devices(userId, deviceId)
+);
+
 CREATE TABLE IF NOT EXISTS one_time_prekeys (
     keyId INTEGER PRIMARY KEY AUTOINCREMENT,
+
     userId TEXT NOT NULL,
-    deviceId INTEGER NOT NULL,
-    preKey BLOB NOT NULL,            -- OPK (Public)
-    isUsed INTEGER DEFAULT 0,        -- 1 = Alice took it, don't give to anyone else
-    FOREIGN KEY (userId) REFERENCES users(userId)
+    deviceId TEXT NOT NULL,
+
+    publicKey BLOB NOT NULL, -- opk
+
+    FOREIGN KEY (userId, deviceId)
+        REFERENCES devices(userId, deviceId)
 );
 
 CREATE TABLE IF NOT EXISTS undelivered_messages (
     queueId INTEGER PRIMARY KEY AUTOINCREMENT,
+
     toUserId TEXT NOT NULL,
-    toDeviceId INTEGER NOT NULL,    -- The specific device this blob is for
+    toDeviceId TEXT NOT NULL,
+
     fromUserId TEXT NOT NULL,
-    fromDeviceId INTEGER NOT NULL,  -- Who sent it
+    fromDeviceId TEXT NOT NULL,
+
     encryptedPayload BLOB NOT NULL, -- The Protobuf message
     createdAt INTEGER NOT NULL,
-    FOREIGN KEY (toUserId, toDeviceId) REFERENCES devices(userId, deviceId)
+
+    FOREIGN KEY (toUserId, toDeviceId)
+        REFERENCES devices(userId, deviceId),
+    FOREIGN KEY (fromUserId, fromDeviceId)
+        REFERENCES devices(userId, deviceId)
 );
 
-CREATE INDEX IF NOT EXISTS idx_otk_user ON one_time_prekeys(userId) WHERE isUsed = 0;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_devices_registration ON devices(userId, registrationId);
+
+CREATE INDEX IF NOT EXISTS idx_opk_lookup ON one_time_prekeys(userId, deviceId);
+
+CREATE INDEX IF NOT EXISTS idx_spk_latest ON signed_prekeys(userId, deviceId, createdAt DESC);
+
+CREATE INDEX IF NOT EXISTS idx_undelivered_lookup ON undelivered_messages(toUserId, toDeviceId, queueId);
 
 CREATE INDEX IF NOT EXISTS idx_messages_toUserId ON messages (toUserId);
 

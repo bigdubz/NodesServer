@@ -1,12 +1,9 @@
-import type {ClientMessage, ServerUserOffline} from "./types.js";
+import type { ClientMessage } from "./types.js";
 import http from "http";
 import { WebSocketServer } from "ws";
 import { routeMessage } from "./messageRouter.js";
 import { connectionManager } from "./connectionManager.js";
 import { handleLogin } from "./http/loginRoute.js";
-import { handleHistory } from "./http/historyRoute.js";
-import { handleConversations } from "./http/conversationRoute.js"
-import { setOffline } from "./presence/presenceStore.js";
 import { broadcast } from "./utils/broadcast.js";
 
 const PORT = 8080;
@@ -16,12 +13,6 @@ const server = http.createServer((req, res) => {
     const path = req.url?.split("?")[0];
     if (path === "/login") {
         return handleLogin(req, res);
-    }
-    if (path === "/history") {
-        return handleHistory(req, res);
-    }
-    if (path === "/conversations") {
-        return handleConversations(req, res);
     }
 
     res.writeHead(200);
@@ -51,14 +42,14 @@ wss.on("connection", (ws) => {
     ws.on("close", () => {
         const userId = (ws as any).userId;
         if (!userId) return;
-        setOffline(userId);
+        // todo: consider presence for e2ee
         broadcast({
             type: "USER_OFFLINE",
             payload: {
                 userId,
                 lastSeen: Date.now()
             }
-        } as ServerUserOffline);
+        });
         connectionManager.remove(userId);
         console.log("Client disconnected (", userId, ")");
     });

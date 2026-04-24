@@ -18,8 +18,11 @@ export type EncryptedEnvelope = {
 
 export type UserKeyBundle = {
     userId: string;
-    deviceId: number;
+    deviceId: string;
     registrationId: number;
+
+    // Signing Key (SK) - Long-term
+    sk: string;
 
     // Identity Key (IK) - Long-term
     ik: string;
@@ -42,4 +45,4 @@ export type ClientMessage =
 export type ServerMessage =
     | { type: "AUTH_OK"; payload: { userId: string } }
     | { type: "ENCRYPTED_RELAY"; payload: EncryptedEnvelope }
-    | { type: "ERROR"; payload: { code: string; message: string } };
+    | { type: "ERROR"; payload: { code: string; error: string } };
