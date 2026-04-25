@@ -41,6 +41,7 @@ wss.on("connection", (ws) => {
 
     ws.on("close", () => {
         const userId = (ws as any).userId;
+        const deviceId = (ws as any).deviceId;
         if (!userId) return;
         // todo: consider presence for e2ee
         broadcast({
@@ -50,7 +51,7 @@ wss.on("connection", (ws) => {
                 lastSeen: Date.now()
             }
         });
-        connectionManager.remove(userId);
+        connectionManager.remove(userId, deviceId);
         console.log("Client disconnected (", userId, ")");
     });
 });

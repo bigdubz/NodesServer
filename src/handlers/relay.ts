@@ -9,12 +9,6 @@ export function relayMessage(ws: WebSocket, message: Extract<ClientMessage, { ty
         fromDeviceId,
         toUserId,
         toDeviceId,
-        clientNonce,
-        dhPublicKey,
-        messageNumber,
-        previousChainLength,
-        iv,
-        ciphertext
     } = message.payload;
 
 

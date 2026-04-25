@@ -3,7 +3,7 @@ export type EncryptedEnvelope = {
     fromDeviceId: string;
     toUserId: string;
     toDeviceId: string;
-    clientNonce: number; // Random number for ACK purposes
+    clientNonce: number; // Random number for ACK purposes (might be unnecessary and will most likely be deleted later)
 
     dhPublicKey: string;
     messageNumber: number;
@@ -18,22 +18,22 @@ export type UserKeyBundle = {
     deviceId: string;
     registrationId: number;
 
-    // signing Key
+    // signing key
     sk: string;
 
-    // identity Key
+    // identity key
     ik: string;
 
-    // signed Prekey (SPK)
+    // signed prekey
     spk: string;
     spkSignature: string;
 
-    // one-time Prekeys
+    // one-time prekeys
     opks: string[];
 };
 
-// Your refined message types
 export type ClientMessage =
+    // client generates deviceId locally (uuid) unnecessary but just simple
     | { type: "AUTH"; payload: { userId: string; deviceId: string, token: string } }
     | { type: "ENCRYPTED_SEND"; payload: EncryptedEnvelope }
     | { type: "UPLOAD_BUNDLE"; payload: UserKeyBundle }; // X3DH setup

@@ -30,8 +30,8 @@ export function handleAuth(ws: WebSocket, msg: Extract<ClientMessage, { type: "A
     } as ServerMessage));
 
     // todo: this should now point to the new undeliveredMessages table
+    // below is not yet refactored (implemented before e2ee)
     const undelivered: MessageRow[] = MessageDB.getUndeliveredMessages(userId);
-
 
     for (const msg of undelivered) {
         const payload: ChatPayLoad = {
@@ -47,18 +47,9 @@ export function handleAuth(ws: WebSocket, msg: Extract<ClientMessage, { type: "A
             type: "CHAT_MESSAGE",
             payload
         } as ServerChatMessage))
-
-        MessageDB.markDelivered(msg.messageId);
-
-        const sender: WebSocket | undefined = connectionManager.get(msg.fromUserId);
-        if (sender && sender.readyState === sender.OPEN) {
-            sender.send(JSON.stringify({
-                type: "MESSAGE_DELIVERED",
-                payload: { messageId: msg.messageId }
-            } as ServerMessageDelivered));
-        }
     }
 
+    // this should only trigger if this is the first device on which the user is online
     broadcast({
         type: "USER_ONLINE",
         payload: { userId }
