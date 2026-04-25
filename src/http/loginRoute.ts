@@ -1,6 +1,6 @@
 import { IncomingMessage, ServerResponse } from "http";
 import { createToken } from "../auth/createToken.js"
-import { UserDB } from "../db/userDb.js";
+import { UsersTable } from "../db/usersTable";
 import bcrypt from "bcrypt";
 
 export function handleLogin(req: IncomingMessage, res: ServerResponse) {
@@ -26,7 +26,7 @@ export function handleLogin(req: IncomingMessage, res: ServerResponse) {
     req.on("end", async () => {
         const { userId, password } = JSON.parse(body);
 
-        const user = UserDB.getUser(userId);
+        const user = UsersTable.getUser(userId);
         if (!user) {
             res.statusCode = 401;
             return res.end("Invalid user or password");

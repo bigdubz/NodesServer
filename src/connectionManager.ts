@@ -3,20 +3,24 @@ import { WebSocket } from "ws";
 class ConnectionManager {
     private connections: Map<string, WebSocket> = new Map<string, WebSocket>();
 
-    add(userId: string, ws: WebSocket): void {
-        this.connections.set(userId, ws);
+    private makeKey(userId: string, deviceId: string): string {
+        return JSON.stringify([userId, deviceId]);
     }
 
-    remove(userId: string): void {
-        this.connections.delete(userId);
+    add(userId: string, deviceId: string, ws: WebSocket): void {
+        this.connections.set(this.makeKey(userId, deviceId), ws);
     }
 
-    get(userId: string): WebSocket | undefined {
-        return this.connections.get(userId);
+    remove(userId: string, deviceId: string): void {
+        this.connections.delete(this.makeKey(userId, deviceId));
     }
 
-    has(userId: string): boolean {
-        return !!this.get(userId);
+    get(userId: string, deviceId: string): WebSocket | undefined {
+        return this.connections.get(this.makeKey(userId, deviceId));
+    }
+
+    has(userId: string, deviceId: string): boolean {
+        return this.connections.has(this.makeKey(userId, deviceId));
     }
 
     getAll(): WebSocket[] {

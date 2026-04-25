@@ -6,7 +6,7 @@ import { verifyToken } from "../auth/verifyToken.js";
 import { MessageDB } from "../db/undeliveredMessages";
 
 export function handleAuth(ws: WebSocket, msg: Extract<ClientMessage, { type: "AUTH"}> ): void {
-    const { userId, token } = msg.payload;
+    const { userId, deviceId, token } = msg.payload;
 
     const verifiedUserId: string | null = verifyToken(token);
 
@@ -21,7 +21,8 @@ export function handleAuth(ws: WebSocket, msg: Extract<ClientMessage, { type: "A
     }
 
     (ws as any).userId = userId;
-    connectionManager.add(userId, ws);
+    (ws as any).deviceId = deviceId;
+    connectionManager.add(userId, deviceId, ws);
 
     ws.send(JSON.stringify({
         type: "AUTH_OK",

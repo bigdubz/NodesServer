@@ -1,6 +1,7 @@
 import type { WebSocket } from "ws";
 import type { ClientMessage, ServerMessage } from "./types.js";
 import { handleAuth } from "./handlers/authHandler.js";
+import { relayMessage } from "./handlers/relay.js";
 
 export function routeMessage(ws: WebSocket, msg: ClientMessage): void {
     switch (msg.type) {
@@ -8,7 +9,7 @@ export function routeMessage(ws: WebSocket, msg: ClientMessage): void {
             return handleAuth(ws, msg);
 
         case "ENCRYPTED_SEND":
-            // route
+            return relayMessage(ws, msg);
 
         default:
             ws.send(JSON.stringify({

@@ -13,7 +13,7 @@ const insertUserStmt = db.prepare(`
     INSERT INTO users (userId, passwordHash) VALUES (?, ?)
 `);
 
-export const UserDB = {
+export const UsersTable = {
     getUser(userId: string): { userId: string; passwordHash: string } | undefined {
         return getUserStmt.get(userId) as {
             userId: string;
