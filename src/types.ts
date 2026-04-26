@@ -1,16 +1,7 @@
-export type EncryptedEnvelope = {
-    fromUserId: string;
-    fromDeviceId: string;
+export type Message = {
     toUserId: string;
     toDeviceId: string;
-    clientNonce: number; // Random number for ACK purposes (might be unnecessary and will most likely be deleted later)
-
-    dhPublicKey: string;
-    messageNumber: number;
-    previousChainLength: number;
-
-    iv: string;
-    ciphertext: string;     // The encrypted 'EncryptedPayload' bytes
+    blob: Buffer;
 }
 
 export type UserKeyBundle = {
@@ -18,6 +9,7 @@ export type UserKeyBundle = {
     deviceId: string;
     registrationId: number;
 
+    // todo: all of these should be changed to Buffer instead of string?
     // signing key
     sk: string;
 
@@ -35,10 +27,10 @@ export type UserKeyBundle = {
 export type ClientMessage =
     // client generates deviceId locally (uuid) unnecessary but just simple
     | { type: "AUTH"; payload: { userId: string; deviceId: string, token: string } }
-    | { type: "ENCRYPTED_SEND"; payload: EncryptedEnvelope }
+    | { type: "ENCRYPTED_SEND"; payload: Message }
     | { type: "UPLOAD_BUNDLE"; payload: UserKeyBundle }; // X3DH setup
 
 export type ServerMessage =
     | { type: "AUTH_OK"; payload: { userId: string } }
-    | { type: "ENCRYPTED_RELAY"; payload: EncryptedEnvelope }
+    | { type: "ENCRYPTED_RELAY"; payload: Message }
     | { type: "ERROR"; payload: { code: string; error: string } };

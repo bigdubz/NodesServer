@@ -6,7 +6,6 @@ import type {UserKeyBundle} from "../types";
 const dbPath: string = path.join(process.cwd(), "src/db/messages.db");
 const db = new Database(dbPath);
 
-
 // prepared statements
 // save bundle
 const insertDeviceStmt = db.prepare(`

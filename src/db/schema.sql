@@ -66,21 +66,16 @@ CREATE TABLE IF NOT EXISTS one_time_prekeys (
         REFERENCES devices(userId, deviceId)
 );
 
-CREATE TABLE IF NOT EXISTS undelivered_messages (
+CREATE TABLE undelivered_messages (
     queueId INTEGER PRIMARY KEY AUTOINCREMENT,
 
     toUserId TEXT NOT NULL,
     toDeviceId TEXT NOT NULL,
 
-    fromUserId TEXT NOT NULL,
-    fromDeviceId TEXT NOT NULL,
-
-    encryptedPayload BLOB NOT NULL, -- The Protobuf message
+    blob BLOB NOT NULL, -- The Protobuf message
     createdAt INTEGER NOT NULL,
 
     FOREIGN KEY (toUserId, toDeviceId)
-        REFERENCES devices(userId, deviceId),
-    FOREIGN KEY (fromUserId, fromDeviceId)
         REFERENCES devices(userId, deviceId)
 );
 
