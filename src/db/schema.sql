@@ -66,20 +66,28 @@ CREATE TABLE IF NOT EXISTS one_time_prekeys (
         REFERENCES devices(userId, deviceId)
 );
 
-CREATE TABLE undelivered_messages (
+CREATE TABLE IF NOT EXISTS undelivered_messages (
     queueId INTEGER PRIMARY KEY AUTOINCREMENT,
 
     toUserId TEXT NOT NULL,
     toDeviceId TEXT NOT NULL,
+    fromUserId TEXT NOT NULL,
+    fromDeviceId TEXT NOT NULL,
 
     blob BLOB NOT NULL, -- The Protobuf message
     createdAt INTEGER NOT NULL,
 
+    hash_blob BLOB NOT NULL,
+
     FOREIGN KEY (toUserId, toDeviceId)
+        REFERENCES devices(userId, deviceId),
+    FOREIGN KEY (fromUserId, fromDeviceId)
         REFERENCES devices(userId, deviceId)
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_devices_registration ON devices(userId, registrationId);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_hash_blob ON undelivered_messages(hash_blob);
 
 CREATE INDEX IF NOT EXISTS idx_opk_lookup ON one_time_prekeys(userId, deviceId);
 
