@@ -1,25 +1,47 @@
 import type { WebSocket } from "ws";
-import type { ClientMessage, ServerMessage } from "./types.js";
+import type { ClientMessage } from "./types.js";
 import { onAuth } from "./handlers/authHandler.js";
 import { relayMessage } from "./handlers/relay.js";
 import { onAck } from "./handlers/ackHandler";
+import { onUploadBundle, onFetchBundles } from "./handlers/BundleHandler.js";
+import { connectionManager } from "./connectionManager";
+import { sendError } from "./utils/send";
 
 export function routeMessage(ws: WebSocket, msg: ClientMessage): void {
+    const conn = connectionManager.findBySocket(ws);
     switch (msg.type) {
         case "AUTH":
             return onAuth(ws, msg);
 
         case "ENCRYPTED_SEND":
-            return relayMessage(ws, msg);
+            if (!conn) {
+                return;
+            }
+            return relayMessage(conn, msg);
 
         case "ACK":
-            return onAck(ws, msg);
+            if (!conn) {
+                return;
+            }
+            return onAck(conn, msg);
+
+        case "UPLOAD_BUNDLE":
+            if (!conn) {
+                return;
+            }
+            return onUploadBundle(conn, msg);
+
+        case "FETCH_BUNDLES":
+            if (!conn) {
+                return;
+            }
+            return onFetchBundles(conn, msg);
 
         default:
-            ws.send(JSON.stringify({
-                type: "ERROR",
-                payload: { code: "100", error: "Unknown message type: " + msg }
-            } as ServerMessage));
+            if (!conn) {
+                return;
+            }
+            sendError(conn, "100", "Unknown message type: " + msg)
             return;
     }
 }

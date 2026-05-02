@@ -1,6 +1,6 @@
 import Database from "better-sqlite3"
 import path from "path";
-import type {UserKeyBundle} from "../types";
+import type {UserKeyBundle, UserKeyBundleResponse} from "../types";
 
 
 const dbPath: string = path.join(process.cwd(), "src/db/messages.db");
@@ -136,7 +136,7 @@ const deleteOpkStmt = db.prepare(`
     WHERE keyId = ?
 `)
 
-const getBundleTx = db.transaction((userId: string, deviceId: string) => {
+const getBundleTx = db.transaction((userId: string, deviceId: string): UserKeyBundleResponse => {
     const device = getDeviceStmt.get(userId, deviceId) as DeviceRow | undefined;
     if (!device) {
         throw new Error("Device not found");
