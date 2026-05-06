@@ -5,6 +5,8 @@ import { routeMessage } from "./messageRouter.js";
 import { connectionManager } from "./connectionManager.js";
 import { handleLogin } from "./http/loginRoute.js";
 import { broadcast } from "./utils/broadcast.js";
+import { handleBundleStatus } from "./http/bundleStatus";
+import { handleFetchBundles, handleUploadBundle } from "./http/BundleHandler";
 
 const PORT = 8080;
 
@@ -12,7 +14,20 @@ const PORT = 8080;
 const server = http.createServer((req, res) => {
     const path = req.url?.split("?")[0];
     if (path === "/login") {
+        console.log("Login request received");
         return handleLogin(req, res);
+    }
+    if (path === "/e2ee" || path?.startsWith("/e2ee/")) {
+        const subPath = path.slice("/e2ee".length);
+        if (subPath === "/bundle/status") {
+            return handleBundleStatus(req, res);
+        }
+        if (subPath === "/bundle/upload") {
+            return handleUploadBundle(req, res);
+        }
+        if (subPath === "/bundle/fetch") {
+            return handleFetchBundles(req, res);
+        }
     }
 
     res.writeHead(200);

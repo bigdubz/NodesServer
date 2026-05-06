@@ -1,5 +1,6 @@
 import type { ClientMessage, UserKeyBundle } from "../types";
 import sodium from "libsodium-wrappers"
+import { MAX_ONE_TIME_PREKEYS_PER_UPLOAD } from "../constants";
 
 await sodium.ready
 
@@ -7,10 +8,19 @@ export function validateUserId(userId: string): boolean {
     return userId.length >= 1 && userId.length <= 64;
 }
 
+function isValidRegistrationId(registrationId: number): boolean {
+    return Number.isInteger(registrationId) && registrationId >= 0 && registrationId <= 0xffff_ffff;
+}
+
+function isBufferOfLength(value: Buffer, expectedLength: number): boolean {
+    return Buffer.isBuffer(value) && value.length === expectedLength;
+}
+
 export function validateBundle(bundle: UserKeyBundle): boolean {
     const {
         userId,
         deviceId,
+        registrationId,
         sk,
         ik,
         spk,
@@ -20,9 +30,13 @@ export function validateBundle(bundle: UserKeyBundle): boolean {
 
     return userId.length >= 1 && userId.length <= 64 &&
             deviceId.length >= 1 && deviceId.length <= 64 &&
-            sk.length === 32 && ik.length === 32 &&
-            spk.length === 32 && spkSignature.length === 64 &&
-            opks.length <= 100;
+            isValidRegistrationId(registrationId) &&
+            isBufferOfLength(sk, sodium.crypto_sign_PUBLICKEYBYTES) &&
+            isBufferOfLength(ik, 32) &&
+            isBufferOfLength(spk, 32) &&
+            isBufferOfLength(spkSignature, sodium.crypto_sign_BYTES) &&
+            opks.length <= MAX_ONE_TIME_PREKEYS_PER_UPLOAD &&
+            opks.every((opk: Buffer) => isBufferOfLength(opk, 32));
 }
 
 export function validateRelayMessage(msg: Extract<ClientMessage, { type: "ENCRYPTED_SEND" }>): boolean {
@@ -34,14 +48,10 @@ export function validateRelayMessage(msg: Extract<ClientMessage, { type: "ENCRYP
 }
 
 export function verifySpkSignature(
-    skPublicKeyB64: string,
-    spkB64: string,
-    signatureB64: string,
+    sk: Buffer,
+    spk: Buffer,
+    signature: Buffer,
 ): boolean {
-    const sk = sodium.from_base64(skPublicKeyB64);
-    const spk = sodium.from_base64(spkB64);
-    const signature = sodium.from_base64(signatureB64);
-
     if (sk.length !== sodium.crypto_sign_PUBLICKEYBYTES ||
         signature.length !== sodium.crypto_sign_BYTES) return false;
 

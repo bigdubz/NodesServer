@@ -1,6 +1,7 @@
 import Database from "better-sqlite3"
 import path from "path";
-import type {UserKeyBundle, UserKeyBundleResponse} from "../types";
+import type {BundleStatusResponse, UserKeyBundle, UserKeyBundleResponse} from "../types";
+import { ONE_TIME_PREKEY_TARGET, MAX_ONE_TIME_PREKEYS_PER_UPLOAD, SIGNED_PREKEY_MAX_AGE_MS } from "../constants";
 
 
 const dbPath: string = path.join(process.cwd(), "src/db/messages.db");
@@ -48,6 +49,20 @@ const getExistingDeviceStmt = db.prepare(`
     WHERE userId = ? AND deviceId = ?
 `);
 
+const getBundleStatusDeviceStmt = db.prepare(`
+    SELECT registrationId, signingKey, identityKey, lastSeen
+    FROM devices
+    WHERE userId = ? AND deviceId = ?
+`);
+
+const getBundleStatusLatestSpkStmt = db.prepare(`
+    SELECT keyId, createdAt
+    FROM signed_prekeys
+    WHERE userId = ? AND deviceId = ?
+    ORDER BY createdAt DESC
+    LIMIT 1
+`);
+
 const countStmt = db.prepare(`
     SELECT COUNT(*) as count
     FROM one_time_prekeys
@@ -61,8 +76,8 @@ const saveBundleTx = db.transaction((bundle: UserKeyBundle, pushToken?: string) 
         bundle.userId,
         bundle.deviceId,
         bundle.registrationId,
-        Buffer.from(bundle.sk, "base64"),
-        Buffer.from(bundle.ik, "base64"),
+        bundle.sk,
+        bundle.ik,
         pushToken ?? null,
         now
     );
@@ -77,8 +92,8 @@ const saveBundleTx = db.transaction((bundle: UserKeyBundle, pushToken?: string) 
                 bundle.userId,
                 bundle.deviceId,
                 spkId,
-                Buffer.from(bundle.spk, "base64"),
-                Buffer.from(bundle.spkSignature, "base64"),
+                bundle.spk,
+                bundle.spkSignature,
                 now
             );
             inserted = true;
@@ -97,7 +112,7 @@ const saveBundleTx = db.transaction((bundle: UserKeyBundle, pushToken?: string) 
         insertOpkStmt.run(
             bundle.userId,
             bundle.deviceId,
-            Buffer.from(opk, "base64")
+            opk
         );
     }
 });
@@ -157,16 +172,16 @@ const getBundleTx = db.transaction((userId: string, deviceId: string): UserKeyBu
         deviceId,
         registrationId: device.registrationId,
 
-        sk: device.signingKey.toString("base64"),
-        ik: device.identityKey.toString("base64"),
+        sk: device.signingKey,
+        ik: device.identityKey,
 
-        spk: spk.publicKey.toString("base64"),
-        spkSignature: spk.signature.toString("base64"),
+        spk: spk.publicKey,
+        spkSignature: spk.signature,
 
         opk: opk
             ? {
                 keyId: opk.keyId,
-                publicKey: opk.publicKey.toString("base64")
+                publicKey: opk.publicKey
               }
             : null
     }
@@ -180,6 +195,15 @@ type DeviceRow = {
     registrationId: number;
     signingKey: Buffer;
     identityKey: Buffer;
+};
+
+type BundleStatusDeviceRow = DeviceRow & {
+    lastSeen: number;
+};
+
+type BundleStatusSpkRow = {
+    keyId: number;
+    createdAt: number;
 };
 
 type SignedPrekeyRow = {
@@ -199,8 +223,8 @@ export const BundlesDB = {
 
         if (existing) {
             const same =
-                existing.signingKey.equals(Buffer.from(bundle.sk, "base64")) &&
-                existing.identityKey.equals(Buffer.from(bundle.ik, "base64"))
+                existing.signingKey.equals(bundle.sk) &&
+                existing.identityKey.equals(bundle.ik)
 
             if (!same) {
                 throw new Error("Identity key mismatch");
@@ -208,6 +232,35 @@ export const BundlesDB = {
         }
 
         saveBundleTx(bundle, pushToken);
+    },
+
+    getBundleStatus(userId: string, deviceId: string): BundleStatusResponse {
+        const now = Date.now();
+
+        const device = getBundleStatusDeviceStmt.get(userId, deviceId) as BundleStatusDeviceRow | undefined;
+        const spk = getBundleStatusLatestSpkStmt.get(userId, deviceId) as BundleStatusSpkRow | undefined;
+        const { count } = countStmt.get(userId, deviceId) as { count: number };
+
+        const bundleMissing = !device || !spk;
+
+        const signedPrekeyCreatedAt = spk?.createdAt ?? 0;
+
+        return {
+            userId,
+            deviceId,
+            bundleMissing,
+
+            oneTimePrekeyCount: count,
+            oneTimePrekeyTarget: ONE_TIME_PREKEY_TARGET,
+            maxOneTimePrekeysPerUpload: MAX_ONE_TIME_PREKEYS_PER_UPLOAD,
+
+            signedPrekeyStale: !spk || now - signedPrekeyCreatedAt > SIGNED_PREKEY_MAX_AGE_MS,
+            signedPrekeyId: spk?.keyId ?? 0,
+            signedPrekeyCreatedAt,
+
+            lastBundleUploadAt: signedPrekeyCreatedAt || device?.lastSeen || 0,
+            serverTime: now
+        }
     },
 
     getBundles(userId: string) {
@@ -227,4 +280,3 @@ export const BundlesDB = {
         return bundles;
     }
 };
-

@@ -4,8 +4,8 @@ import path from "path";
 import { createHash } from 'crypto';
 
 
-const dbPath: string = path.join(process.cwd(), "messages.db");
-const schemaPath: string = path.join(process.cwd(), "schema.sql");
+const dbPath: string = path.join(process.cwd(), "src/db/messages.db");
+const schemaPath: string = path.join(process.cwd(), "src/db/schema.sql");
 
 const db = new Database(dbPath);
 

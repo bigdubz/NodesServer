@@ -1,5 +1,5 @@
 import { IncomingMessage, ServerResponse } from "http";
-import { createToken } from "../auth/createToken.js"
+import { createBootstrapToken } from "../auth/token"
 import { UsersTable } from "../db/usersTable";
 import bcrypt from "bcrypt";
 
@@ -37,7 +37,7 @@ export function handleLogin(req: IncomingMessage, res: ServerResponse) {
             return res.end("Invalid user or password");
         }
 
-        const token: string = createToken(userId);
+        const token: string = createBootstrapToken(userId);
 
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");

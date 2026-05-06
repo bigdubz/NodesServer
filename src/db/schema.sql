@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS undelivered_messages (
     blob BLOB NOT NULL, -- The Protobuf message
     createdAt INTEGER NOT NULL,
 
-    hash_blob BLOB NOT NULL,
+    blobHash BLOB NOT NULL,
 
     FOREIGN KEY (toUserId, toDeviceId)
         REFERENCES devices(userId, deviceId),
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS undelivered_messages (
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_devices_registration ON devices(userId, registrationId);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_hash_blob ON undelivered_messages(hash_blob);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_hash_blob ON undelivered_messages(blobHash);
 
 CREATE INDEX IF NOT EXISTS idx_opk_lookup ON one_time_prekeys(userId, deviceId);
 

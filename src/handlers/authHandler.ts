@@ -1,8 +1,8 @@
 import type { WebSocket } from "ws";
-import type { ClientMessage, ServerMessage } from "../types.js";
-import { broadcast, sendPresence } from "../utils/broadcast.js"
+import type { ClientMessage, DeviceTokenPayload, ServerMessage } from "../types.js";
+// import { broadcast, sendPresence } from "../utils/broadcast.js"
 import { connectionManager } from "../connectionManager.js";
-import { verifyToken } from "../auth/verifyToken.js";
+import { createDeviceToken, verifyBootstrapToken } from "../auth/token.js";
 import { MessageDB, type MessageRow } from "../db/undeliveredMessages";
 import { sendOk } from "../utils/send";
 
@@ -10,7 +10,7 @@ import { sendOk } from "../utils/send";
 export function onAuth(ws: WebSocket, msg: Extract<ClientMessage, { type: "AUTH"}> ): void {
     const { userId, deviceId, token } = msg.payload;
 
-    const verifiedUserId: string | null = verifyToken(token);
+    const verifiedUserId: string | null = verifyBootstrapToken(token);
 
     if (!verifiedUserId || verifiedUserId !== userId) {
         const error: ServerMessage = {
@@ -23,7 +23,9 @@ export function onAuth(ws: WebSocket, msg: Extract<ClientMessage, { type: "AUTH"
     }
 
     const conn = connectionManager.add(ws, userId, deviceId);
-    sendOk(conn, "AUTH_OK", { userId });
+    const deviceToken = createDeviceToken(userId, deviceId);
+    const payload: DeviceTokenPayload = { userId, deviceId, deviceToken };
+    sendOk(conn, "AUTH_OK", payload);
     const undelivered: MessageRow[] = MessageDB.getUndeliveredMessages(userId, deviceId);
 
     for (const msg of undelivered) {
@@ -38,9 +40,9 @@ export function onAuth(ws: WebSocket, msg: Extract<ClientMessage, { type: "AUTH"
     }
 
     // this should only trigger if this is the first device on which the user is online
-    broadcast({
-        type: "USER_ONLINE",
-        payload: { userId }
-    } as ServerUserOnline);
-    sendPresence(userId);
+    // broadcast({
+    //     type: "USER_ONLINE",
+    //     payload: { userId }
+    // });
+    // sendPresence(userId);
 }

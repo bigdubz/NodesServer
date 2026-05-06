@@ -3,7 +3,6 @@ import type { ClientMessage } from "./types.js";
 import { onAuth } from "./handlers/authHandler.js";
 import { relayMessage } from "./handlers/relay.js";
 import { onAck } from "./handlers/ackHandler";
-import { onUploadBundle, onFetchBundles } from "./handlers/BundleHandler.js";
 import { connectionManager } from "./connectionManager";
 import { sendError } from "./utils/send";
 
@@ -24,18 +23,6 @@ export function routeMessage(ws: WebSocket, msg: ClientMessage): void {
                 return;
             }
             return onAck(conn, msg);
-
-        case "UPLOAD_BUNDLE":
-            if (!conn) {
-                return;
-            }
-            return onUploadBundle(conn, msg);
-
-        case "FETCH_BUNDLES":
-            if (!conn) {
-                return;
-            }
-            return onFetchBundles(conn, msg);
 
         default:
             if (!conn) {
