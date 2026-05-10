@@ -172,16 +172,16 @@ const getBundleTx = db.transaction((userId: string, deviceId: string): UserKeyBu
         deviceId,
         registrationId: device.registrationId,
 
-        sk: device.signingKey,
-        ik: device.identityKey,
+        sk: device.signingKey.toString("base64"),
+        ik: device.identityKey.toString("base64"),
 
-        spk: spk.publicKey,
-        spkSignature: spk.signature,
+        spk: spk.publicKey.toString("base64"),
+        spkSignature: spk.signature.toString("base64"),
 
         opk: opk
             ? {
                 keyId: opk.keyId,
-                publicKey: opk.publicKey
+                publicKey: opk.publicKey.toString("base64")
               }
             : null
     }
@@ -275,6 +275,10 @@ export const BundlesDB = {
             } catch (err) {
                 // skip broken device
             }
+        }
+
+        if (bundles.length === 0) {
+            throw new Error("No bundles found");
         }
 
         return bundles;

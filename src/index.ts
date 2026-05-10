@@ -25,7 +25,7 @@ const server = http.createServer((req, res) => {
         if (subPath === "/bundle/upload") {
             return handleUploadBundle(req, res);
         }
-        if (subPath === "/bundle/fetch") {
+        if (subPath === "/bundle/download") {
             return handleFetchBundles(req, res);
         }
     }

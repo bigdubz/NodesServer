@@ -193,13 +193,22 @@ export function handleFetchBundles(req: IncomingMessage, res: ServerResponse) {
         });
     }
 
+    if (userId === user.userId) {
+        return sendJson(res, 500, {
+            code: "304",
+            error: "Cannot fetch bundles for own user"
+        })
+    }
+
     try {
         const bundles: UserKeyBundleResponse[] = BundlesDB.getBundles(userId);
+        console.log("Bundles fetched:", bundles);
         return sendJson(res, 200, {
             type: "FETCH_BUNDLES_OK",
             payload: bundles
         });
     } catch {
+        console.log("Error fetching bundles");
         return sendJson(res, 500, {
             code: "302",
             error: "Bundle fetch failed"

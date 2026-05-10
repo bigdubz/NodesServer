@@ -44,13 +44,13 @@ export type UserKeyBundleResponse = {
     userId: string;
     deviceId: string;
     registrationId: number;
-    sk: Buffer;
-    ik: Buffer;
-    spk: Buffer;
-    spkSignature: Buffer;
+    sk: string;
+    ik: string;
+    spk: string;
+    spkSignature: string;
     opk: {
         keyId: number;
-        publicKey: Buffer;
+        publicKey: string;
     } | null;
 }
 

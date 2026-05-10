@@ -28,3 +28,5 @@ error "100" means category "1" error "00"
 302 – *Bundle fetch failed*
 
 303 – *Invalid SPK signature*
+
+304 – *Cannot fetch own bundle*
