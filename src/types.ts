@@ -54,6 +54,13 @@ export type UserKeyBundleResponse = {
     } | null;
 }
 
+export type ContactResponse = {
+    userId: string;
+    deviceId: string;
+    ik: string;
+    sk: string;
+}
+
 // client -> server
 export type ClientMessage =
     // client generates deviceId locally (uuid) unnecessary but just simple

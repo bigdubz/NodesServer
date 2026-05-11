@@ -1,6 +1,6 @@
 import Database from "better-sqlite3"
 import path from "path";
-import type {BundleStatusResponse, UserKeyBundle, UserKeyBundleResponse} from "../types";
+import type { BundleStatusResponse, UserKeyBundle, UserKeyBundleResponse, ContactResponse } from "../types";
 import { ONE_TIME_PREKEY_TARGET, MAX_ONE_TIME_PREKEYS_PER_UPLOAD, SIGNED_PREKEY_MAX_AGE_MS } from "../constants";
 
 
@@ -187,6 +187,20 @@ const getBundleTx = db.transaction((userId: string, deviceId: string): UserKeyBu
     }
 });
 
+const getContactTx = db.transaction((userId: string, deviceId: string): ContactResponse => {
+    const device = getDeviceStmt.get(userId, deviceId) as DeviceRow | undefined;
+    if (!device) {
+        throw new Error("Device not found");
+    }
+
+    return {
+        userId,
+        deviceId,
+        ik: device.identityKey.toString("base64"),
+        sk: device.signingKey.toString("base64")
+    }
+});
+
 function generateSpkId(): number {
     return Math.floor(Math.random() * 2 ** 31);
 }
@@ -282,5 +296,26 @@ export const BundlesDB = {
         }
 
         return bundles;
+    },
+
+    getContacts(userId: string) {
+        const rows = getDevicesForUserStmt.all(userId) as { deviceId: string }[];
+
+        const contacts: ContactResponse[] = [];
+
+        for (const row of rows) {
+            try {
+                const contact = getContactTx(userId, row.deviceId);
+                contacts.push(contact);
+            } catch (err) {
+
+            }
+        }
+
+        if (contacts.length === 0) {
+            throw new Error("No contacts found");
+        }
+
+        return contacts;
     }
 };

@@ -9,6 +9,8 @@ error "100" means category "1" error "00"
 
 3 – *bundle error*
 
+4 – *contact error*
+
 
 ## specific error codes:
 100 – *Unknown message type*
@@ -30,3 +32,5 @@ error "100" means category "1" error "00"
 303 – *Invalid SPK signature*
 
 304 – *Cannot fetch own bundle*
+
+400 – *Contact not found*

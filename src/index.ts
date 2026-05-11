@@ -6,7 +6,7 @@ import { connectionManager } from "./connectionManager.js";
 import { handleLogin } from "./http/loginRoute.js";
 import { broadcast } from "./utils/broadcast.js";
 import { handleBundleStatus } from "./http/bundleStatus";
-import { handleFetchBundles, handleUploadBundle } from "./http/BundleHandler";
+import {handleFetchBundles, handleFetchContact, handleUploadBundle} from "./http/BundleHandler";
 
 const PORT = 8080;
 
@@ -27,6 +27,9 @@ const server = http.createServer((req, res) => {
         }
         if (subPath === "/bundle/download") {
             return handleFetchBundles(req, res);
+        }
+        if (subPath === "/contact") {
+            return handleFetchContact(req, res);
         }
     }
 

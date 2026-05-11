@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "http";
-import type { UserKeyBundle, UserKeyBundleResponse } from "../types";
+import type {ContactResponse, UserKeyBundle, UserKeyBundleResponse} from "../types";
 import { BundlesDB } from "../db/bundles";
 import { validateBundle, validateUserId, verifySpkSignature } from "../utils/validate";
 import { verifyDeviceToken } from "../auth/token";
@@ -212,6 +212,60 @@ export function handleFetchBundles(req: IncomingMessage, res: ServerResponse) {
         return sendJson(res, 500, {
             code: "302",
             error: "Bundle fetch failed"
+        });
+    }
+}
+
+export function handleFetchContact(req: IncomingMessage, res: ServerResponse) {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+    if (req.method === "OPTIONS") {
+        res.statusCode = 204;
+        return res.end();
+    }
+
+    if (req.method !== "GET") {
+        res.statusCode = 405;
+        return res.end("Method not allowed");
+    }
+
+    const user = getBearerUser(req);
+    if (!user) {
+        res.statusCode = 401;
+        return res.end("Missing or invalid Authorization header");
+    }
+
+    const url = new URL(req.url ?? "", "http://localhost");
+    const userId = url.searchParams.get("userId") ?? "";
+
+    if (!validateUserId(userId)) {
+        return sendJson(res, 400, {
+            code: "201",
+            error: "Invalid user ID: " + userId
+        });
+    }
+
+    if (userId === user.userId) {
+        return sendJson(res, 500, {
+            code: "304",
+            error: "Cannot fetch bundles for own user"
+        })
+    }
+
+    try {
+        const contacts: ContactResponse[] = BundlesDB.getContacts(userId);
+        console.log("Contacts fetched:", contacts);
+        return sendJson(res, 200, {
+            type: "FETCH_CONTACTS_OK",
+            payload: contacts
+        });
+    } catch {
+        console.log("Error fetching bundles");
+        return sendJson(res, 500, {
+            code: "400",
+            error: "Contact not found"
         });
     }
 }
