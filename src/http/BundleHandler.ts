@@ -249,8 +249,8 @@ export function handleFetchContact(req: IncomingMessage, res: ServerResponse) {
 
     if (userId === user.userId) {
         return sendJson(res, 500, {
-            code: "304",
-            error: "Cannot fetch bundles for own user"
+            code: "401",
+            error: "Cannot fetch contact for own user"
         })
     }
 
@@ -262,7 +262,7 @@ export function handleFetchContact(req: IncomingMessage, res: ServerResponse) {
             payload: contacts
         });
     } catch {
-        console.log("Error fetching bundles");
+        console.log("Error fetching contacts");
         return sendJson(res, 500, {
             code: "400",
             error: "Contact not found"

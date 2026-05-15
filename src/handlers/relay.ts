@@ -42,12 +42,5 @@ export function relayMessage(conn: ClientConnection,
             blob: blob.toString("base64")
             }
         );
-
-        // we need another ACK specifically designed to be client -> server, so that the server knows
-        // whether it is safe to delete the message or not (we will use hash(blob) from client for referencing)
-        // we never delete messages here.
-        // so, we need an onAck(). we use conn.auth.userId and conn.auth.deviceId to infer the
-        // original sender's destination.
-        // (the sender of the ACK is the receiver of the message)
     }
 }

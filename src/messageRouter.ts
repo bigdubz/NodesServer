@@ -8,6 +8,7 @@ import { sendError } from "./utils/send";
 
 export function routeMessage(ws: WebSocket, msg: ClientMessage): void {
     const conn = connectionManager.findBySocket(ws);
+    const type = msg.type;
     switch (msg.type) {
         case "AUTH":
             return onAuth(ws, msg);
@@ -28,7 +29,7 @@ export function routeMessage(ws: WebSocket, msg: ClientMessage): void {
             if (!conn) {
                 return;
             }
-            sendError(conn, "100", "Unknown message type: " + msg)
+            sendError(conn, "100", "Unknown message type: " + type)
             return;
     }
 }
