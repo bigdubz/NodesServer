@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "http";
-import type {ContactResponse, UserKeyBundle, UserKeyBundleResponse} from "../types";
+import type {ContactResponse, OneTimePrekey, UserKeyBundle, UserKeyBundleResponse} from "../types";
 import { BundlesDB } from "../db/bundles";
 import { validateBundle, validateUserId, verifySpkSignature } from "../utils/validate";
 import { verifyDeviceToken } from "../auth/token";
@@ -51,7 +51,16 @@ function bundleFromPayload(payload: unknown, userId: string, deviceId: string): 
         ik: toBuffer(body.ik),
         spk: toBuffer(body.spk),
         spkSignature: toBuffer(body.spkSignature),
-        opks: Array.isArray(body.opks) ? body.opks.map(toBuffer) : []
+        opks: Array.isArray(body.opks)
+            ? body.opks.map((opk): OneTimePrekey => {
+                const item = isRecord(opk) ? opk : {};
+
+                return {
+                    keyId: Number(item.keyId),
+                    publicKey: toBuffer(item.publicKey)
+                };
+            })
+            : []
     };
 }
 
@@ -154,7 +163,8 @@ export async function handleUploadBundle(req: IncomingMessage, res: ServerRespon
                 deviceId: user.deviceId
             }
         });
-    } catch {
+    } catch (err) {
+        console.error("Error saving bundle:", err);
         return sendJson(res, 500, {
             code: "301",
             error: "Bundle upload failed"

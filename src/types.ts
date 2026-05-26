@@ -37,8 +37,13 @@ export type UserKeyBundle = {
     spkSignature: Buffer;
 
     // one-time prekeys
-    opks: Buffer[];
+    opks: OneTimePrekey[];
 };
+
+export type OneTimePrekey = {
+    keyId: number;
+    publicKey: Buffer;
+}
 
 export type UserKeyBundleResponse = {
     userId: string;

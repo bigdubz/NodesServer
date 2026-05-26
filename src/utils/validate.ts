@@ -36,7 +36,11 @@ export function validateBundle(bundle: UserKeyBundle): boolean {
             isBufferOfLength(spk, 32) &&
             isBufferOfLength(spkSignature, sodium.crypto_sign_BYTES) &&
             opks.length <= MAX_ONE_TIME_PREKEYS_PER_UPLOAD &&
-            opks.every((opk: Buffer) => isBufferOfLength(opk, 32));
+            opks.every(opk =>
+                Number.isInteger(opk.keyId) &&
+                opk.keyId >= 0 &&
+                isBufferOfLength(opk.publicKey, 32)
+            );
 }
 
 export function validateRelayMessage(msg: Extract<ClientMessage, { type: "ENCRYPTED_SEND" }>): boolean {

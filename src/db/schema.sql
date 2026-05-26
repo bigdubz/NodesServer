@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS signed_prekeys (
 
 CREATE TABLE IF NOT EXISTS one_time_prekeys (
     keyId INTEGER PRIMARY KEY AUTOINCREMENT,
+    userKeyId INTEGER NOT NULL,
 
     userId TEXT NOT NULL,
     deviceId TEXT NOT NULL,

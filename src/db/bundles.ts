@@ -1,6 +1,11 @@
 import Database from "better-sqlite3"
 import path from "path";
-import type { BundleStatusResponse, UserKeyBundle, UserKeyBundleResponse, ContactResponse } from "../types";
+import type {
+    BundleStatusResponse,
+    UserKeyBundle,
+    UserKeyBundleResponse,
+    ContactResponse,
+} from "../types";
 import { ONE_TIME_PREKEY_TARGET, MAX_ONE_TIME_PREKEYS_PER_UPLOAD, SIGNED_PREKEY_MAX_AGE_MS } from "../constants";
 
 
@@ -37,10 +42,11 @@ const insertSpkStmt = db.prepare(`
 
 const insertOpkStmt = db.prepare(`
     INSERT INTO one_time_prekeys (
+        userKeyId,
         userId,
         deviceId,
         publicKey
-    ) VALUES (?, ?, ?)
+    ) VALUES (?, ?, ?, ?)
 `);
 
 const getExistingDeviceStmt = db.prepare(`
@@ -104,15 +110,16 @@ const saveBundleTx = db.transaction((bundle: UserKeyBundle, pushToken?: string) 
 
     const { count } = countStmt.get(bundle.userId, bundle.deviceId) as { count: number };
 
-    if (count > 1000) {
+    if (count > ONE_TIME_PREKEY_TARGET) {
         throw new Error("Too many OPKs");
     }
 
     for (const opk of bundle.opks) {
         insertOpkStmt.run(
+            opk.keyId,
             bundle.userId,
             bundle.deviceId,
-            opk
+            opk.publicKey
         );
     }
 });
@@ -139,7 +146,7 @@ const getLatestSpkStmt = db.prepare(`
 `)
 
 const getOneOpkStmt = db.prepare(`
-    SELECT keyId, publicKey
+    SELECT keyId, userKeyId, publicKey
     FROM one_time_prekeys
     WHERE userId = ? AND deviceId = ?
     ORDER BY keyId
@@ -180,7 +187,7 @@ const getBundleTx = db.transaction((userId: string, deviceId: string): UserKeyBu
 
         opk: opk
             ? {
-                keyId: opk.keyId,
+                keyId: opk.userKeyId,
                 publicKey: opk.publicKey.toString("base64")
               }
             : null
@@ -227,8 +234,9 @@ type SignedPrekeyRow = {
 
 type OneTimePrekeyRow = {
     keyId: number;
+    userKeyId: number;
     publicKey: Buffer;
-};
+}
 
 export const BundlesDB = {
     saveBundle(bundle: UserKeyBundle, pushToken?: string): void {
