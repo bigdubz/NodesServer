@@ -60,7 +60,7 @@ export const MessageDB = {
             toDeviceId: r.toDeviceId,
             fromUserId: r.fromUserId,
             fromDeviceId: r.fromDeviceId,
-            blob: Buffer.from(r.blob),
+            blob: r.blob,
             createdAt: r.createdAt,
             blobHash: Buffer.from(r.blobHash),
         }))
@@ -76,7 +76,8 @@ export const MessageDB = {
         return hash;
     },
 
-    deleteTempMessage(toUserId: string, toDeviceId:string, blobHash: Buffer): void {
-        deleteMessageStmt.run(toUserId, toDeviceId, blobHash);
+    deleteTempMessage(toUserId: string, toDeviceId: string, blobHash: string): void {
+        const hashBuffer = Buffer.from(blobHash, "hex");
+        deleteMessageStmt.run(toUserId, toDeviceId, hashBuffer);
     }
 };

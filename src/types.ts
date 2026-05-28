@@ -71,7 +71,7 @@ export type ClientMessage =
     // client generates deviceId locally (uuid) unnecessary but just simple
     | { type: "AUTH"; payload: AuthRequest }
     | { type: "ENCRYPTED_SEND"; payload: Message }
-    | { type: "ACK"; payload: { blobHash: Buffer } };
+    | { type: "ACK"; payload: { blobHash: string } };
 
 export type ServerRelay = {
     toUserId: string;
